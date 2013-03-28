@@ -16,6 +16,7 @@ import org.eclipse.ui.progress.IProgressService;
 import org.mwc.debrief.core.DebriefPlugin;
 import org.mwc.debrief.core.editors.PlotEditor;
 import org.mwc.debrief.core.gpx.ImportGPX;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 import org.mwc.debrief.core.interfaces.IPlotLoader;
 
 import MWC.GUI.Layers;
@@ -35,7 +36,7 @@ public class GPXLoader extends IPlotLoader.BaseLoader
 	 * .editors.CorePlotEditor, org.eclipse.ui.IEditorInput)
 	 */
 	@Override
-	public void loadFile(final PlotEditor thePlot, final InputStream inputStream,
+	public void loadFile(final IPlotEditor thePlot, final InputStream inputStream,
 			final String fileName)
 	{
 

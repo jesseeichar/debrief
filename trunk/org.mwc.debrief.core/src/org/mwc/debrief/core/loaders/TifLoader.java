@@ -15,6 +15,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.IProgressService;
 import org.mwc.debrief.core.DebriefPlugin;
 import org.mwc.debrief.core.editors.PlotEditor;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 import org.mwc.debrief.core.interfaces.IPlotLoader;
 
 import MWC.GUI.ExternallyManagedDataLayer;
@@ -38,7 +39,7 @@ public class TifLoader extends IPlotLoader.BaseLoader
 	 * @see org.mwc.debrief.core.interfaces.IPlotLoader#loadFile(org.mwc.cmap.plotViewer.editors.CorePlotEditor,
 	 *      org.eclipse.ui.IEditorInput)
 	 */
-	public void loadFile(final PlotEditor thePlot, final InputStream inputStream, final String fileName)
+	public void loadFile(final IPlotEditor thePlot, final InputStream inputStream, final String fileName)
 	{
 			final Layers theLayers = (Layers) thePlot.getAdapter(Layers.class);
 

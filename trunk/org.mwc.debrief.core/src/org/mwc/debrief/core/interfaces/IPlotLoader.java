@@ -26,7 +26,7 @@ public interface IPlotLoader extends INamedItem
 	 * @param inputStream the file source
 	 * @param fileName TODO
 	 */
-	public void loadFile(final PlotEditor thePlot, final InputStream inputStream, final String fileName);
+	public void loadFile(final IPlotEditor thePlot, final InputStream inputStream, final String fileName);
 
 	
 	/** test whether this loader can load the suppled input source
@@ -124,7 +124,7 @@ public interface IPlotLoader extends INamedItem
 			return _myLoader;
 		}
 
-		public void loadFile(PlotEditor thePlot, InputStream inputStream, String fileName)
+		public void loadFile(IPlotEditor thePlot, InputStream inputStream, String fileName)
 		{
 			if(_myLoader == null)
 			{

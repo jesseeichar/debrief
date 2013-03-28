@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.Status;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.debrief.core.editors.PlotEditor;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 
@@ -49,7 +50,7 @@ public final class DebriefEclipseXMLReaderWriter extends
 	 */
 	public final void importThis(final String fName,
 			final java.io.InputStream is, Layers destination,
-			IControllableViewport view, PlotEditor plot)
+			IControllableViewport view, IPlotEditor plot)
 	{
 		// create the handler for this type of data
 		final MWCXMLReader handler = new PlotHandler(fName, destination, view, plot);

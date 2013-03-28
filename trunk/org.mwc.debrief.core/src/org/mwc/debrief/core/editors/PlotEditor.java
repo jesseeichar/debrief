@@ -80,6 +80,7 @@ import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
 import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
 import org.mwc.debrief.core.DebriefPlugin;
 import org.mwc.debrief.core.editors.painters.LayerPainterManager;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 import org.mwc.debrief.core.interfaces.IPlotLoader;
 import org.mwc.debrief.core.interfaces.IPlotLoader.BaseLoader;
 import org.mwc.debrief.core.interfaces.IPlotLoader.DeferredPlotLoader;
@@ -119,7 +120,7 @@ import MWC.TacticalData.IRollingNarrativeProvider;
 /**
  * @author ian.mayo
  */
-public class PlotEditor extends org.mwc.cmap.plotViewer.editors.CorePlotEditor
+public class PlotEditor extends org.mwc.cmap.plotViewer.editors.CorePlotEditor implements IPlotEditor
 {
 	// Extension point tag and attributes in plugin.xml
 	private static final String EXTENSION_POINT_ID = "DebriefPlotLoader";

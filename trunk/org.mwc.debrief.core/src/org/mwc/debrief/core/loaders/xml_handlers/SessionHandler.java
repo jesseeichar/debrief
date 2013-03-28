@@ -6,6 +6,7 @@ import org.eclipse.core.runtime.IAdaptable;
 import org.mwc.cmap.core.DataTypes.TrackData.TrackManager;
 import org.mwc.cmap.core.interfaces.*;
 import org.mwc.debrief.core.editors.PlotEditor;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 
 import Debrief.ReaderWriter.XML.DebriefLayersHandler;
 import MWC.Algorithms.PlainProjection;
@@ -26,7 +27,7 @@ import MWC.GenericData.WorldArea;
 public class SessionHandler extends MWC.Utilities.ReaderWriter.XML.MWCXMLReader
 {
   public SessionHandler(Layers _theLayers, 
-  		final IControllableViewport  view, PlotEditor plot)
+  		final IControllableViewport  view, IPlotEditor plot)
   {
     // inform our parent what type of class we are
     super("session");

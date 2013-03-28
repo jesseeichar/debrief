@@ -33,6 +33,21 @@
 			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.DebriefPlotGPX">
 			</contentTypeBinding>
 		</editor>
+		<editor name="Debrief uDig Plot Editor" icon="icons/debrief_icon.gif"
+			class="org.mwc.debrief.core.editors.udig.PlotEditor" id="org.mwc.udig.debrief.PlotEditor">
+			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.DebriefPlot">
+			</contentTypeBinding>
+			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.ReplayTrackFile">
+			</contentTypeBinding>
+			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.ReplaySensorFile">
+			</contentTypeBinding>
+			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.KMZTrackFile">
+			</contentTypeBinding>
+			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.KMZTrackArchive">
+			</contentTypeBinding>
+			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.DebriefPlotGPX">
+			</contentTypeBinding>
+		</editor>
 	</extension>
 
 	<extension point="org.eclipse.core.contenttype.contentTypes">
@@ -86,6 +101,7 @@
 		<import plugin="org.eclipse.core.filesystem" />
   <import plugin="org.eclipse.ui.cheatsheets" version="3.4.0"/>
   <import plugin="org.mwc.cmap.gt2Plot" version="1.0.0"/>
+  <import plugin="net.refractions.udig.project.ui" version="1.3.1"/>
 
 	</requires>
 	<extension-point id="DebriefPlotLoader" name="Plot Loader"

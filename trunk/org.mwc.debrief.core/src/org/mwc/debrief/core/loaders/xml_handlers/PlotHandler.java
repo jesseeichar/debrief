@@ -4,6 +4,7 @@ import org.mwc.cmap.core.DataTypes.Temporal.TimeManager;
 import org.mwc.cmap.core.DataTypes.Temporal.TimeProvider;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.debrief.core.editors.PlotEditor;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 
 import Debrief.ReaderWriter.XML.DetailsHandler;
 import MWC.GUI.Layers;
@@ -21,7 +22,7 @@ final public class PlotHandler extends
 {
 	
 	public PlotHandler(String fileName, Layers destination,
-			IControllableViewport view, final PlotEditor plot)
+			IControllableViewport view, final IPlotEditor plot)
 	{
 		// inform our parent what type of class we are
 		super("plot");

@@ -14,6 +14,7 @@ import org.mwc.cmap.core.DataTypes.Temporal.*;
 import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider;
 import org.mwc.debrief.core.editors.PlotEditor;
 import org.mwc.debrief.core.editors.painters.LayerPainterManager;
+import org.mwc.debrief.core.interfaces.IPlotEditor;
 import org.w3c.dom.Element;
 
 import Debrief.ReaderWriter.XML.GUI.*;
@@ -59,7 +60,7 @@ abstract public class SWTGUIHandler extends
 
 	static private StepperHandler _myStepperHandler;
 
-	public SWTGUIHandler(final PlotEditor thePlot)
+	public SWTGUIHandler(final IPlotEditor thePlot)
 	{
 		// inform our parent what type of class we are
 		super("gui");
@@ -129,7 +130,7 @@ abstract public class SWTGUIHandler extends
 	abstract public void assignTracks(String primaryTrack,
 			Vector<String> secondaryTracks);
 
-	void addThisComponent(ComponentDetails details, PlotEditor thePlot)
+	void addThisComponent(ComponentDetails details, IPlotEditor thePlot)
 	{
 		// sort out this component
 		String cType = details.type;
