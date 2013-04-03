@@ -3,12 +3,15 @@ package org.mwc.cmap.plotViewer;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
+import net.refractions.udig.catalog.CatalogPlugin;
+
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.mwc.cmap.core.ui_support.swt.SWTRasterPainter;
 import org.mwc.cmap.plotViewer.actions.ExportWMF;
 import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
 import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.plotViewer.editors.udig.PlottableService;
 import org.osgi.framework.BundleContext;
 
 import MWC.GUI.Chart.Painters.SpatialRasterPainter;
@@ -44,6 +47,8 @@ public class PlotViewerPlugin extends AbstractUIPlugin {
 		
 		// override the spatial raster painter - since we're working with SWT images, not JAva ones
 		SpatialRasterPainter.overridePainter(new SWTRasterPainter());
+		
+		CatalogPlugin.getDefault().getLocalCatalog().add(PlottableService.INSTANCE);
 	}
 
 	/**
