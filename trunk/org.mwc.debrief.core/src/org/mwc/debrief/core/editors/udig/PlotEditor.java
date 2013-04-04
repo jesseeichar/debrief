@@ -9,6 +9,8 @@ import java.net.URI;
 import java.util.Enumeration;
 import java.util.Vector;
 
+import net.refractions.udig.project.internal.render.ViewportModel;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.internal.resources.ResourceException;
@@ -20,8 +22,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorInput;
@@ -30,6 +30,7 @@ import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.ide.FileStoreEditorInput;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.DataTypes.Temporal.ControllableTime;
 import org.mwc.cmap.core.DataTypes.Temporal.TimeControlPreferences;
@@ -37,8 +38,8 @@ import org.mwc.cmap.core.DataTypes.Temporal.TimeControlProperties;
 import org.mwc.cmap.core.DataTypes.Temporal.TimeManager;
 import org.mwc.cmap.core.DataTypes.Temporal.TimeProvider;
 import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider;
-import org.mwc.cmap.core.DataTypes.TrackData.TrackManager;
 import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider.TrackDataListener;
+import org.mwc.cmap.core.DataTypes.TrackData.TrackManager;
 import org.mwc.cmap.core.interfaces.INamedItem;
 import org.mwc.cmap.core.ui_support.wizards.SimplePageListWizard;
 import org.mwc.cmap.core.wizards.EnterBooleanPage;
@@ -46,6 +47,7 @@ import org.mwc.cmap.core.wizards.EnterRangePage;
 import org.mwc.cmap.core.wizards.EnterStringPage;
 import org.mwc.cmap.core.wizards.SelectColorPage;
 import org.mwc.cmap.plotViewer.editors.udig.CorePlotEditor;
+import org.mwc.cmap.plotViewer.editors.udig.JtsAdapter;
 import org.mwc.debrief.core.interfaces.IPlotEditor;
 import org.mwc.debrief.core.interfaces.IPlotLoader;
 import org.mwc.debrief.core.interfaces.IPlotLoader.BaseLoader;
@@ -137,6 +139,15 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 
 		// and start the load
 		loadThisFile(input);
+
+		ViewportModel viewportModel = _map.getViewportModelInternal();
+		try {
+			viewportModel.eSetDeliver(false); // we don't need event to rerender yet
+			ReferencedEnvelope envelope = JtsAdapter.toEnvelope(_myLayers.getBounds());
+			viewportModel.setBounds(envelope);
+		} finally {
+			viewportModel.eSetDeliver(true);			
+		}
 
 		// lastly, set the title (if we have one)
 		this.setPartName(input.getName());

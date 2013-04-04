@@ -2,6 +2,7 @@ package org.mwc.cmap.plotViewer.editors.udig;
 
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Vector;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -69,10 +70,18 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				try
 				{
 					MWC.GUI.Layer next = queue.take();
-					PlottableGeoResource resource = PlottableService.INSTANCE
-							.addLayer(next);
-					AddLayersCommand cmd = new AddLayersCommand(
-							Collections.singletonList(resource));
+					sleep(200); // sleep to give system time to put all layers in queue
+					LinkedList<IGeoResource> resources = new LinkedList<IGeoResource>();
+
+					while (next != null)
+					{
+						PlottableGeoResource resource = PlottableService.INSTANCE
+								.addLayer(next);
+						resources.add(resource);
+						next = queue.poll();
+					}
+
+					AddLayersCommand cmd = new AddLayersCommand(resources);
 					cmd.setMap(_map);
 					cmd.run(new NullProgressMonitor());
 				}
@@ -171,7 +180,6 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		_viewer.setMap(_map);
 		_viewer.init(this);
 
-		zoomToExtent();
 		this._chart = new UdigViewportCanvasAdaptor(_viewer);
 		_viewer.getViewport().addMouseListener(new DebriefMapMouseListener(this));
 		_viewer.getViewport().addMouseMotionListener(
@@ -184,13 +192,6 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		super.dispose();
 		_viewer.dispose();
-	}
-
-	private void zoomToExtent()
-	{
-		ReferencedEnvelope envelope = JtsAdapter.toEnvelope(_myLayers.getBounds());
-		SetViewportBBoxCommand cmd = new SetViewportBBoxCommand(envelope);
-		_map.sendCommandASync(cmd);
 	}
 
 	@Override

@@ -53,17 +53,16 @@ public class PlottableRenderer extends MultiLayerRendererImpl
 	public void render(Graphics2D destination, IProgressMonitor monitor)
 			throws RenderException
 	{
-		destination.setColor(Color.RED);
-
 		PlainProjection proj = new UDigRendererProjection((ViewportModel) getContext().getMap().getViewportModel());
-		proj.setDataArea(JtsAdapter.toWorldArea(context.getViewportModel().getBounds()));
-		proj.setScreenArea(context.getImageSize());
 
 		CanvasType dest = new CanvasAdaptor(proj, destination);
 		
 		for (MWC.GUI.Layer layer : getLayers())
 		{
-			layer.paint(dest);
+			synchronized (layer)
+			{
+				layer.paint(dest);
+			}
 		}
 	}
 

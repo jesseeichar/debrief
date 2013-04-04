@@ -3,6 +3,7 @@ package org.mwc.cmap.plotViewer.editors.udig;
 import java.awt.Point;
 
 import net.refractions.udig.project.internal.render.ViewportModel;
+import net.refractions.udig.project.render.displayAdapter.IMapDisplay;
 import MWC.Algorithms.PlainProjection;
 import MWC.GenericData.WorldLocation;
 
@@ -17,6 +18,9 @@ public class UDigRendererProjection extends PlainProjection
 	{
 		super("udig");
 		this._viewportModel = viewportModel;
+		setDataArea(JtsAdapter.toWorldArea(_viewportModel.getBounds()));
+		IMapDisplay mapDisplay = _viewportModel.getRenderManagerInternal().getMapDisplay();
+		setScreenArea(mapDisplay.getDisplaySize());
 	}
 
 	@Override
