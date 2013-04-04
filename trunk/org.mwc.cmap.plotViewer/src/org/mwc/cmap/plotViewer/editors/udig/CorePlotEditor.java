@@ -1,48 +1,55 @@
 package org.mwc.cmap.plotViewer.editors.udig;
 
-import java.io.File;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URL;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Vector;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
 
-import net.refractions.udig.catalog.CatalogPlugin;
 import net.refractions.udig.catalog.IGeoResource;
-import net.refractions.udig.catalog.IService;
 import net.refractions.udig.project.IProject;
-import net.refractions.udig.project.command.UndoableComposite;
-import net.refractions.udig.project.internal.Layer;
 import net.refractions.udig.project.internal.Map;
 import net.refractions.udig.project.internal.command.navigation.SetViewportBBoxCommand;
-import net.refractions.udig.project.internal.commands.AddLayerCommand;
 import net.refractions.udig.project.internal.commands.AddLayersCommand;
 import net.refractions.udig.project.internal.commands.CreateMapCommand;
+import net.refractions.udig.project.render.IViewportModel;
 import net.refractions.udig.project.ui.ApplicationGIS;
 import net.refractions.udig.project.ui.internal.MapPart;
 import net.refractions.udig.project.ui.tool.IMapEditorSelectionProvider;
 import net.refractions.udig.project.ui.viewers.MapViewer;
-import net.refractions.udig.ui.PlatformGIS;
 
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IStatusLineManager;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.part.EditorPart;
-import org.geotools.data.DataUtilities;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
+import org.mwc.cmap.core.property_support.EditableWrapper;
+import org.mwc.cmap.core.property_support.RightClickSupport;
 
+import MWC.GUI.Editable;
+import MWC.GUI.Layer;
 import MWC.GUI.Layers;
+import MWC.GUI.Plottable;
+import MWC.GUI.Tools.Chart.HitTester;
+import MWC.GUI.Tools.Chart.RightClickEdit;
+import MWC.GUI.Tools.Chart.RightClickEdit.ObjectConstruct;
+import MWC.GenericData.WorldLocation;
+
+import com.vividsolutions.jts.geom.Coordinate;
 
 public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		ISelectionProvider
@@ -92,6 +99,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	 * the graphic data we know about
 	 */
 	protected Layers _myLayers;
+	protected UdigViewportCanvasAdaptor _chart;
 
 	public CorePlotEditor()
 	{
@@ -124,7 +132,8 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 			@Override
 			public void removeThisLayer(MWC.GUI.Layer theLayer)
 			{
-				Iterator<Layer> layersInternal = _map.getLayersInternal().iterator();
+				Iterator<net.refractions.udig.project.internal.Layer> layersInternal = _map
+						.getLayersInternal().iterator();
 				while (layersInternal.hasNext())
 				{
 					net.refractions.udig.project.internal.Layer layer = layersInternal
@@ -159,48 +168,29 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		_viewer = new MapViewer(parent, SWT.DOUBLE_BUFFERED);
 
-		FileDialog dialog = new FileDialog(PlatformUI.getWorkbench()
-				.getActiveWorkbenchWindow().getShell());
-		dialog.setFilterExtensions(new String[]
-		{ "*.shp" });
-		String path = dialog.open();
-		File file = new File(path);
-		final URL url = DataUtilities.fileToURL(file);
-
 		_viewer.setMap(_map);
 		_viewer.init(this);
 
-		PlatformGIS.run(new IRunnableWithProgress()
-		{
+		zoomToExtent();
+		this._chart = new UdigViewportCanvasAdaptor(_viewer);
+		_viewer.getViewport().addMouseListener(new DebriefMapMouseListener(this));
+		_viewer.getViewport().addMouseMotionListener(
+				new DebriefMapMouseMotionListener(this));
+		_viewer.getViewport().addPaneListener(new DebriefMapDisplayListener(this));
+	}
 
-			@Override
-			public void run(IProgressMonitor monitor)
-					throws InvocationTargetException, InterruptedException
-			{
+	@Override
+	public void dispose()
+	{
+		super.dispose();
+		_viewer.dispose();
+	}
 
-				try
-				{
-					IService service = CatalogPlugin.getDefault().getLocalCatalog()
-							.acquire(url, monitor);
-
-					Layer layer = _viewer.getMap().getLayerFactory()
-							.createLayer(service.resources(monitor).get(0));
-					UndoableComposite cmds = new UndoableComposite();
-					cmds.add(new AddLayerCommand(layer));
-
-					cmds.add(new SetViewportBBoxCommand(JtsAdapter.toEnvelope(_myLayers
-							.getBounds())));
-					_viewer.getMap().sendCommandASync(cmds);
-
-				}
-				catch (Exception e)
-				{
-					e.printStackTrace();
-					System.exit(-1);
-				}
-			}
-		});
-
+	private void zoomToExtent()
+	{
+		ReferencedEnvelope envelope = JtsAdapter.toEnvelope(_myLayers.getBounds());
+		SetViewportBBoxCommand cmd = new SetViewportBBoxCommand(envelope);
+		_map.sendCommandASync(cmd);
 	}
 
 	@Override
@@ -223,6 +213,10 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		{
 			res = this;
 		}
+		else if (adapter == IControllableViewport.class)
+		{
+			res = this;
+		}
 
 		return res;
 	}
@@ -230,8 +224,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	@Override
 	public Map getMap()
 	{
-		// TODO Auto-generated method stub
-		return _viewer.getMap();
+		return _map;
 	}
 
 	@Override
@@ -291,4 +284,154 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		// TODO Auto-generated method stub
 
 	}
+
+	public void openContextMenu(int x, int y)
+	{
+		MenuManager mmgr = new MenuManager();
+		Point scrPoint = new Point(x, y);
+		IViewportModel viewportModel = _map.getViewportModel();
+		Coordinate worldCoordinate = viewportModel.pixelToWorld(x, y);
+		WorldLocation loc = JtsAdapter.toWorldLocation(worldCoordinate);
+
+		Layers theData = _myLayers;
+
+		double layerDist = -1;
+
+		// find the nearest editable item
+		ObjectConstruct vals = new ObjectConstruct();
+		int num = theData.size();
+		for (int i = 0; i < num; i++)
+		{
+			Layer thisL = theData.elementAt(i);
+			if (thisL.getVisible())
+			{
+				// find the nearest items, this method call will recursively pass down
+				// through the layers
+				RightClickEdit.findNearest(thisL, loc, vals);
+
+				if ((layerDist == -1) || (vals.distance < layerDist))
+				{
+					layerDist = vals.distance;
+				}
+			}
+		}
+
+		// ok, now retrieve the values produced by the range-finding algorithm
+		Plottable res = vals.object;
+		Layer theParent = vals.parent;
+		double dist = vals.distance;
+		Vector<Plottable> noPoints = vals.rangeIndependent;
+
+		// see if this is in our dbl-click range
+		if (HitTester.doesHit(new java.awt.Point(scrPoint.x, scrPoint.y), loc,
+				dist, _chart.getProjection()))
+		{
+			// do nothing, we're all happy
+		}
+		else
+		{
+			res = null;
+		}
+
+		// have we found something editable?
+		if (res != null)
+		{
+			// so get the editor
+			Editable.EditorType e = res.getInfo();
+			if (e != null)
+			{
+				RightClickSupport.getDropdownListFor(mmgr, new Editable[]
+				{ res }, new Layer[]
+				{ theParent }, new Layer[]
+				{ theParent }, _myLayers, false);
+
+				// TODO doSupplementalRightClickProcessing(mmgr, res, theParent);
+				notImplementedDialog();
+			}
+		}
+		else
+		{
+			// not found anything useful,
+			// so edit just the projection
+
+			RightClickSupport.getDropdownListFor(mmgr, new Editable[]
+			{ _chart.getProjection() }, null, null, _myLayers, true);
+
+			// also see if there are any other non-position-related items
+			if (noPoints != null)
+			{
+				// stick in a separator
+				mmgr.add(new Separator());
+
+				for (Iterator<Plottable> iter = noPoints.iterator(); iter.hasNext();)
+				{
+					final Plottable pl = iter.next();
+					RightClickSupport.getDropdownListFor(mmgr, new Editable[]
+					{ pl }, null, null, _myLayers, true);
+
+					// ok, is it editable
+					if (pl.getInfo() != null)
+					{
+						// ok, also insert an "Edit..." item
+						Action editThis = new Action("Edit " + pl.getName() + " ...")
+						{
+							@Override
+							public void run()
+							{
+								// ok, wrap the editab
+								EditableWrapper pw = new EditableWrapper(pl, _myLayers);
+								ISelection selected = new StructuredSelection(pw);
+								// TODO parentFireSelectionChanged(selected);
+								notImplementedDialog();
+							}
+						};
+
+						mmgr.add(editThis);
+						// hey, stick in another separator
+						mmgr.add(new Separator());
+					}
+				}
+			}
+
+			Menu thisM = mmgr.createContextMenu(_viewer.getControl());
+			thisM.setVisible(true);
+		}
+
+		Action changeBackColor = new Action("Edit base chart")
+		{
+			@Override
+			public void run()
+			{
+				notImplementedDialog();
+				// EditableWrapper wrapped = new EditableWrapper(_chart, _myLayers);
+				// ISelection selected = new StructuredSelection(wrapped);
+				// TODO parentFireSelectionChanged(selected);
+			}
+
+		};
+		mmgr.add(changeBackColor);
+
+		Action editProjection = new Action("Edit Projection")
+		{
+			@Override
+			public void run()
+			{
+				EditableWrapper wrapped = new EditableWrapper(_chart.getProjection(),
+						_myLayers);
+				ISelection selected = new StructuredSelection(wrapped);
+				// TODO parentFireSelectionChanged(selected);
+				notImplementedDialog();
+			}
+
+		};
+		mmgr.add(editProjection);
+
+	}
+
+	protected void notImplementedDialog()
+	{
+		MessageDialog.openInformation(Display.getCurrent().getActiveShell(),
+				"Not implemented", "I have not implemented this yet");
+	}
+
 }

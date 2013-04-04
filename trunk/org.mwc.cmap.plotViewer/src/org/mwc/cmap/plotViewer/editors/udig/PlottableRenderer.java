@@ -3,10 +3,10 @@ package org.mwc.cmap.plotViewer.editors.udig;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.refractions.udig.project.internal.render.ViewportModel;
 import net.refractions.udig.project.internal.render.impl.MultiLayerRendererImpl;
 import net.refractions.udig.project.render.ICompositeRenderContext;
 import net.refractions.udig.project.render.IRenderContext;
@@ -53,10 +53,9 @@ public class PlottableRenderer extends MultiLayerRendererImpl
 	public void render(Graphics2D destination, IProgressMonitor monitor)
 			throws RenderException
 	{
-		
 		destination.setColor(Color.RED);
 
-		PlainProjection proj = new UDigRendererProjection(getContext());
+		PlainProjection proj = new UDigRendererProjection((ViewportModel) getContext().getMap().getViewportModel());
 		proj.setDataArea(JtsAdapter.toWorldArea(context.getViewportModel().getBounds()));
 		proj.setScreenArea(context.getImageSize());
 

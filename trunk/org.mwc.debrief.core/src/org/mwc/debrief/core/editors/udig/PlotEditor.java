@@ -31,6 +31,14 @@ import org.eclipse.ui.IPersistableElement;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.ide.FileStoreEditorInput;
 import org.mwc.cmap.core.CorePlugin;
+import org.mwc.cmap.core.DataTypes.Temporal.ControllableTime;
+import org.mwc.cmap.core.DataTypes.Temporal.TimeControlPreferences;
+import org.mwc.cmap.core.DataTypes.Temporal.TimeControlProperties;
+import org.mwc.cmap.core.DataTypes.Temporal.TimeManager;
+import org.mwc.cmap.core.DataTypes.Temporal.TimeProvider;
+import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider;
+import org.mwc.cmap.core.DataTypes.TrackData.TrackManager;
+import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider.TrackDataListener;
 import org.mwc.cmap.core.interfaces.INamedItem;
 import org.mwc.cmap.core.ui_support.wizards.SimplePageListWizard;
 import org.mwc.cmap.core.wizards.EnterBooleanPage;
@@ -54,6 +62,7 @@ import MWC.Algorithms.PlainProjection.RelativeProjectionParent;
 import MWC.GUI.Editable;
 import MWC.GUI.Layer;
 import MWC.GUI.Layers;
+import MWC.GenericData.WatchableList;
 import MWC.GenericData.WorldArea;
 import MWC.GenericData.WorldDistance;
 import MWC.TacticalData.IRollingNarrativeProvider;
@@ -74,8 +83,48 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 	private static final String EXTENSION_TAG_EXTENSIONS_ATTRIB = "extensions";
 
 	private static final String EXTENSION_TAG_ICON_ATTRIB = "icon";
+
 	private LoaderManager _loader;
 
+	/**
+	 * we keep the reference to our track-type adapter
+	 */
+	TrackDataProvider _trackDataProvider;
+
+	/**
+	 * an object to look after all of the time bits
+	 */
+	private TimeManager _timeManager;
+	private TimeControlProperties _timePreferences;
+	
+	public PlotEditor()
+	{
+
+		// create the track manager to manage the primary & secondary tracks
+		_trackDataProvider = new TrackManager(_myLayers);
+
+		// and listen out form modifications, because we want to mark ourselves
+		// as
+		// dirty once they've updated
+		_trackDataProvider.addTrackDataListener(new TrackDataListener()
+		{
+			public void tracksUpdated(WatchableList primary,
+					WatchableList[] secondaries)
+			{
+				notImplementedDialog();
+//				fireDirty();
+			}
+		});
+
+		// create the time manager. cool
+		_timeManager = new TimeManager();
+//		_timeManager.addListener(_timeListener,
+//				TimeProvider.TIME_CHANGED_PROPERTY_NAME);
+
+		// and how time is managed
+		_timePreferences = new TimeControlProperties();
+
+	}
 	@Override
 	public void init(IEditorSite site, IEditorInput input)
 			throws PartInitException {
@@ -400,19 +449,19 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 			if (_myLayers != null)
 				res = _myLayers;
 		}
+		else if (adapter == TrackManager.class)
+		{
+			res = _trackDataProvider;
+		}
+		else if (adapter == TrackDataProvider.class)
+		{
+			res = _trackDataProvider;
+		}
+		else if (adapter == PlainProjection.class)
+		{
+			res = _chart.getProjection();
+		}
 		// TODO
-//		else if (adapter == TrackManager.class)
-//		{
-//			res = _trackDataProvider;
-//		}
-//		else if (adapter == TrackDataProvider.class)
-//		{
-//			res = _trackDataProvider;
-//		}
-//		else if (adapter == PlainProjection.class)
-//		{
-//			res = super.getChart().getCanvas().getProjection();
-//		}
 //		else if (adapter == TimeControllerOperationStore.class)
 //		{
 //			res = getTimeControllerOperations();
@@ -425,18 +474,18 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 //		{
 //			res = _myOperations;
 //		}
-//		else if (adapter == TimeControlPreferences.class)
-//		{
-//			res = _timePreferences;
-//		}
-//		else if (adapter == ControllableTime.class)
-//		{
-//			res = _timeManager;
-//		}
-//		else if (adapter == TimeProvider.class)
-//		{
-//			res = _timeManager;
-//		}
+		else if (adapter == TimeControlPreferences.class)
+		{
+			res = _timePreferences;
+		}
+		else if (adapter == ControllableTime.class)
+		{
+			res = _timeManager;
+		}
+		else if (adapter == TimeProvider.class)
+		{
+			res = _timeManager;
+		}
 //		else if (adapter == IGotoMarker.class)
 //		{
 //			return new IGotoMarker()

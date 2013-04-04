@@ -2,8 +2,7 @@ package org.mwc.cmap.plotViewer.editors.udig;
 
 import java.awt.Point;
 
-import net.refractions.udig.project.render.ICompositeRenderContext;
-
+import net.refractions.udig.project.internal.render.ViewportModel;
 import MWC.Algorithms.PlainProjection;
 import MWC.GenericData.WorldLocation;
 
@@ -11,31 +10,31 @@ public class UDigRendererProjection extends PlainProjection
 {
 
 	private static final long serialVersionUID = 1L;
-	private ICompositeRenderContext context;
-	private double zoom;
+	private double _zoom;
+	private ViewportModel _viewportModel;
 
-	public UDigRendererProjection(ICompositeRenderContext context)
+	public UDigRendererProjection(ViewportModel viewportModel)
 	{
 		super("udig");
-		this.context = context;
+		this._viewportModel = viewportModel;
 	}
 
 	@Override
 	public Point toScreen(WorldLocation val)
 	{
-		return context.worldToPixel(JtsAdapter.toCoord(val));
+		return _viewportModel.worldToPixel(JtsAdapter.toCoord(val));
 	}
 
 	@Override
 	public WorldLocation toWorld(Point val)
 	{
-		return JtsAdapter.toWorldLocation(context.pixelToWorld(val.x, val.y));
+		return JtsAdapter.toWorldLocation(_viewportModel.pixelToWorld(val.x, val.y));
 	}
 
 	@Override
 	public void zoom(double value)
 	{
-		this.zoom = value;
+		this._zoom = value;
 
 	}
 
