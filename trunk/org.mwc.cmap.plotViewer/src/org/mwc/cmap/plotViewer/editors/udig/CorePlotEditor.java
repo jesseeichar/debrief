@@ -346,8 +346,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				{ theParent }, new Layer[]
 				{ theParent }, _myLayers, false);
 
-				// TODO doSupplementalRightClickProcessing(mmgr, res, theParent);
-				notImplementedDialog();
+				doSupplementalRightClickProcessing(mmgr, res, theParent);
 			}
 		}
 		else
@@ -433,6 +432,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		MessageDialog.openInformation(Display.getCurrent().getActiveShell(),
 				"Not implemented", "I have not implemented this yet");
+		new UnsupportedOperationException("I have not implemented this yet").printStackTrace();
 	}
-
+	
 }
