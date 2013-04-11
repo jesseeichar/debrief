@@ -33,7 +33,7 @@
 			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.DebriefPlotGPX">
 			</contentTypeBinding>
 		</editor>
-		<editor name="Debrief uDig Plot Editor" icon="icons/debrief_icon.gif"
+		<editor name="Debrief uDig Plot Editor" icon="icons/debrief_uDig_icon.gif"
 			class="org.mwc.debrief.core.editors.udig.PlotEditor" id="org.mwc.udig.debrief.PlotEditor">
 			<contentTypeBinding contentTypeId="org.mwc.debrief.contenttype.DebriefPlot">
 			</contentTypeBinding>
