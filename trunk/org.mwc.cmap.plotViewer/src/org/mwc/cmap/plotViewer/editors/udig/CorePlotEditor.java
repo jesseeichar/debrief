@@ -346,7 +346,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				{ theParent }, new Layer[]
 				{ theParent }, _myLayers, false);
 
-				doSupplementalRightClickProcessing(mmgr, res, theParent);
+			// JESSE - this method is undefined in the current build:	doSupplementalRightClickProcessing(mmgr, res, theParent);
 			}
 		}
 		else
