@@ -1,5 +1,6 @@
 package org.mwc.cmap.plotViewer.editors.udig;
 
+import java.awt.Color;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -9,8 +10,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 
 import net.refractions.udig.catalog.IGeoResource;
 import net.refractions.udig.project.IProject;
+import net.refractions.udig.project.ProjectBlackboardConstants;
 import net.refractions.udig.project.internal.Map;
-import net.refractions.udig.project.internal.command.navigation.SetViewportBBoxCommand;
 import net.refractions.udig.project.internal.commands.AddLayersCommand;
 import net.refractions.udig.project.internal.commands.CreateMapCommand;
 import net.refractions.udig.project.render.IViewportModel;
@@ -28,23 +29,31 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.ui.part.EditorPart;
-import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.cmap.core.property_support.EditableWrapper;
 import org.mwc.cmap.core.property_support.RightClickSupport;
+import org.mwc.cmap.plotViewer.actions.IChartBasedEditor;
+import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas.LocationSelectedAction;
 
 import MWC.GUI.Editable;
 import MWC.GUI.Layer;
 import MWC.GUI.Layers;
+import MWC.GUI.PlainChart;
 import MWC.GUI.Plottable;
+import MWC.GUI.Layers.DataListener2;
 import MWC.GUI.Tools.Chart.HitTester;
 import MWC.GUI.Tools.Chart.RightClickEdit;
 import MWC.GUI.Tools.Chart.RightClickEdit.ObjectConstruct;
@@ -53,7 +62,7 @@ import MWC.GenericData.WorldLocation;
 import com.vividsolutions.jts.geom.Coordinate;
 
 public abstract class CorePlotEditor extends EditorPart implements MapPart,
-		ISelectionProvider
+		ISelectionProvider, Editable, IChartBasedEditor
 {
 	private final class AddLayerThread extends Thread
 	{
@@ -101,6 +110,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 
 	protected MapViewer _viewer;
 	protected Map _map;
+	private Vector<ISelectionChangedListener> _selectionListeners;
 
 	AddLayerThread _addLayerThread = new AddLayerThread();
 
@@ -108,7 +118,15 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	 * the graphic data we know about
 	 */
 	protected Layers _myLayers;
-	protected UdigViewportCanvasAdaptor _chart;
+	protected UdigViewportCanvasAdaptor _canvas;
+	private LocationSelectedAction _copyLocation;
+	private DataListener2 _listenForMods;
+	private boolean _ignoreDirtyCalls = false;
+	protected boolean _plotIsDirty = false;
+	private Color _backgroundColor;
+	private ISelection _currentSelection;
+	private float _lineThickness;
+	private UdigChart _chart;
 
 	public CorePlotEditor()
 	{
@@ -155,14 +173,87 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				super.removeThisLayer(theLayer);
 			}
 		};
+		
+
+		_listenForMods = new DataListener2()
+		{
+
+			public void dataModified(Layers theData, Layer changedLayer)
+			{
+				fireDirty();
+			}
+
+			public void dataExtended(Layers theData)
+			{
+				layersExtended();
+				fireDirty();
+			}
+
+			public void dataReformatted(Layers theData, Layer changedLayer)
+			{
+				fireDirty();
+			}
+
+			@Override
+			public void dataExtended(Layers theData, Plottable newItem, Layer parent)
+			{
+				layersExtended();
+				fireDirty();
+			}
+
+		};
+		_myLayers.addDataExtendedListener(_listenForMods);
+		_myLayers.addDataModifiedListener(_listenForMods);
+		_myLayers.addDataReformattedListener(_listenForMods);
+
+		
+	}
+	/**
+	 * make a note that the data is now dirty, and needs saving.
+	 */
+	public void fireDirty()
+	{
+		if (!_ignoreDirtyCalls )
+		{
+			_plotIsDirty  = true;
+			Display.getDefault().asyncExec(new Runnable()
+			{
+
+				@SuppressWarnings("synthetic-access")
+				public void run()
+				{
+					firePropertyChange(PROP_DIRTY);
+				}
+			});
+		}
 	}
 
+	/**
+	 * new data has been added - have a look at the times
+	 */
+	protected void layersExtended()
+	{
+
+	}
+	/**
+	 * hmm, are we dirty?
+	 * 
+	 * @return
+	 */
+	public final boolean isDirty()
+	{
+		return _plotIsDirty;
+	}
 	// TODO
 	@Override
 	public void addSelectionChangedListener(ISelectionChangedListener listener)
 	{
-		// TODO Auto-generated method stub
+		if (_selectionListeners == null)
+			_selectionListeners = new Vector<ISelectionChangedListener>(0, 1);
 
+		// see if we don't already contain it..
+		if (!_selectionListeners.contains(listener))
+			_selectionListeners.add(listener);
 	}
 
 	/*
@@ -175,12 +266,19 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	@Override
 	public void createPartControl(Composite parent)
 	{
+		getSite().setSelectionProvider(this);
 		_viewer = new MapViewer(parent, SWT.DOUBLE_BUFFERED);
 
 		_viewer.setMap(_map);
 		_viewer.init(this);
 
-		this._chart = new UdigViewportCanvasAdaptor(_viewer);
+		if(_backgroundColor != null) {
+			setBackgroundColor(_backgroundColor);
+		}
+
+		this._canvas = new UdigViewportCanvasAdaptor(_viewer);
+		this._chart = new UdigChart(this);
+		
 		_viewer.getViewport().addMouseListener(new DebriefMapMouseListener(this));
 		_viewer.getViewport().addMouseMotionListener(
 				new DebriefMapMouseMotionListener(this));
@@ -192,6 +290,9 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		super.dispose();
 		_viewer.dispose();
+		_viewer = null;
+		_myLayers.close();
+		_myLayers = null;
 	}
 
 	@Override
@@ -244,15 +345,17 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	@Override
 	public void openContextMenu()
 	{
-		// TODO Auto-generated method stub
+		Point size = _viewer.getControl().getSize();
+		int x = size.x / 2;
+		int y = size.y / 2;
 
+		openContextMenu(x,y);
 	}
 
 	@Override
 	public void removeSelectionChangedListener(ISelectionChangedListener listener)
 	{
-		// TODO Auto-generated method stub
-
+		_selectionListeners.remove(listener);
 	}
 
 	/*
@@ -290,10 +393,12 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		MenuManager mmgr = new MenuManager();
 		Point scrPoint = new Point(x, y);
-		IViewportModel viewportModel = _map.getViewportModel();
+ 		IViewportModel viewportModel = _map.getViewportModel();
 		Coordinate worldCoordinate = viewportModel.pixelToWorld(x, y);
 		WorldLocation loc = JtsAdapter.toWorldLocation(worldCoordinate);
 
+		addCopyLocationItem(mmgr, scrPoint, loc);
+		
 		Layers theData = _myLayers;
 
 		double layerDist = -1;
@@ -325,7 +430,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 
 		// see if this is in our dbl-click range
 		if (HitTester.doesHit(new java.awt.Point(scrPoint.x, scrPoint.y), loc,
-				dist, _chart.getProjection()))
+				dist, _canvas.getProjection()))
 		{
 			// do nothing, we're all happy
 		}
@@ -355,7 +460,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 			// so edit just the projection
 
 			RightClickSupport.getDropdownListFor(mmgr, new Editable[]
-			{ _chart.getProjection() }, null, null, _myLayers, true);
+			{ _canvas.getProjection() }, null, null, _myLayers, true);
 
 			// also see if there are any other non-position-related items
 			if (noPoints != null)
@@ -381,8 +486,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 								// ok, wrap the editab
 								EditableWrapper pw = new EditableWrapper(pl, _myLayers);
 								ISelection selected = new StructuredSelection(pw);
-								// TODO parentFireSelectionChanged(selected);
-								notImplementedDialog();
+								fireSelectionChanged(selected);
 							}
 						};
 
@@ -392,39 +496,72 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 					}
 				}
 			}
-
-			Menu thisM = mmgr.createContextMenu(_viewer.getControl());
-			thisM.setVisible(true);
 		}
 
-		Action changeBackColor = new Action("Edit base chart")
+		Action editBaseChart = new Action("Edit base chart")
 		{
 			@Override
 			public void run()
 			{
-				notImplementedDialog();
-				// EditableWrapper wrapped = new EditableWrapper(_chart, _myLayers);
-				// ISelection selected = new StructuredSelection(wrapped);
-				// TODO parentFireSelectionChanged(selected);
+				 EditableWrapper wrapped = new EditableWrapper(CorePlotEditor.this, _myLayers);
+				 ISelection selected = new StructuredSelection(wrapped);
+				 fireSelectionChanged(selected);
 			}
 
 		};
-		mmgr.add(changeBackColor);
+		mmgr.add(editBaseChart);
 
 		Action editProjection = new Action("Edit Projection")
 		{
 			@Override
 			public void run()
 			{
-				EditableWrapper wrapped = new EditableWrapper(_chart.getProjection(),
+				EditableWrapper wrapped = new EditableWrapper(_canvas.getProjection(),
 						_myLayers);
 				ISelection selected = new StructuredSelection(wrapped);
-				// TODO parentFireSelectionChanged(selected);
-				notImplementedDialog();
+				fireSelectionChanged(selected);
 			}
 
 		};
 		mmgr.add(editProjection);
+
+		Menu thisM = mmgr.createContextMenu(_viewer.getControl());
+		thisM.setVisible(true);
+
+	}
+
+	private void addCopyLocationItem(MenuManager mmgr, Point scrPoint,
+			WorldLocation loc)
+	{
+		// right, we create the actions afresh each time here. We can't
+		// automatically calculate it.
+		_copyLocation = new LocationSelectedAction("Copy cursor location",
+				SWT.PUSH, loc)
+		{
+			/**
+			 * @param loc
+			 *          the converted world location for the mouse-click
+			 * @param pt
+			 *          the screen coordinate of the click
+			 */
+			public void run(WorldLocation theLoc)
+			{
+				// represent the location as a text-string
+				String locText = CorePlugin.toClipboard(theLoc);
+
+				// right, copy the location to the clipboard
+				Clipboard clip = CorePlugin.getDefault().getClipboard();
+				Object[] data = new Object[]
+				{ locText };
+				Transfer[] types = new Transfer[]
+				{ TextTransfer.getInstance() };
+				clip.setContents(data, types);
+
+			}
+		};
+
+		mmgr.add(_copyLocation);
+		mmgr.add(new Separator());
 
 	}
 
@@ -434,5 +571,64 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				"Not implemented", "I have not implemented this yet");
 		new UnsupportedOperationException("I have not implemented this yet").printStackTrace();
 	}
+
+	public Color getBackgroundColor()
+	{
+		return _backgroundColor;
+	}
+	public void setBackgroundColor(Color backgroundColor)
+	{
+		this._backgroundColor = backgroundColor;
+		if (_viewer != null) {
+			_viewer.getMap().getBlackboard().put(ProjectBlackboardConstants.MAP__BACKGROUND_COLOR, _backgroundColor);
+			_viewer.getRenderManager().refresh(null);
+		}
+	}
+
+	public void setLineThickness (float lineThickness) {
+		this._lineThickness = lineThickness;
+	}
 	
+	public float getLineThickness () {
+		return _lineThickness;
+	}
+	
+	public void fireSelectionChanged(ISelection sel)
+	{
+		// just double-check that we're not already processing this
+		if (sel != _currentSelection)
+		{
+			_currentSelection = sel;
+			if (_selectionListeners != null)
+			{
+				SelectionChangedEvent sEvent = new SelectionChangedEvent(this, sel);
+				for (Iterator<ISelectionChangedListener> stepper = _selectionListeners
+						.iterator(); stepper.hasNext();)
+				{
+					ISelectionChangedListener thisL = stepper.next();
+					if (thisL != null)
+					{
+						thisL.selectionChanged(sEvent);
+					}
+				}
+			}
+		}
+	}
+	public Layers getLayers()
+	{
+		return _myLayers;
+	}
+
+	@Override
+	public InteractiveChart getChart()
+	{
+		return _chart;
+	}
+
+	@Override
+	public void selectPlottable(Plottable shape, Layer layer)
+	{
+		// TODO Auto-generated method stub
+		
+	}
 }

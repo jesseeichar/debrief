@@ -68,7 +68,7 @@ public class SessionHandler extends MWC.Utilities.ReaderWriter.XML.MWCXMLReader
   //	setGUIDetails(null);
   }
 
-  public static void exportThis(PlotEditor thePlot, org.w3c.dom.Element parent,
+  public static void exportThis(IPlotEditor thePlot, org.w3c.dom.Element parent,
                                 org.w3c.dom.Document doc)
   {
     // ok, get the layers
@@ -77,7 +77,7 @@ public class SessionHandler extends MWC.Utilities.ReaderWriter.XML.MWCXMLReader
     exportTheseLayers(theLayers, thePlot, parent, doc);
   }
 
-  public static void exportTheseLayers(Layers theLayers, PlotEditor thePlot, org.w3c.dom.Element parent,
+  public static void exportTheseLayers(Layers theLayers, IPlotEditor thePlot, org.w3c.dom.Element parent,
       org.w3c.dom.Document doc)
   {
     org.w3c.dom.Element eSession = doc.createElement("session");

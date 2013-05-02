@@ -1,6 +1,6 @@
 package org.mwc.cmap.plotViewer.actions;
 
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart;
 
 import MWC.GUI.Layer;
 import MWC.GUI.Plottable;
@@ -12,7 +12,7 @@ import MWC.GUI.Plottable;
  */
 public interface IChartBasedEditor
 {
-	public SWTChart getChart();
+	public InteractiveChart getChart();
 
 	public void selectPlottable(Plottable shape, Layer layer);
 }

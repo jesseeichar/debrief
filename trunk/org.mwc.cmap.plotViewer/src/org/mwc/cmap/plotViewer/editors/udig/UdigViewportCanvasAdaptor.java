@@ -13,7 +13,9 @@ import java.awt.geom.Arc2D;
 import java.awt.image.ImageObserver;
 
 import org.eclipse.swt.graphics.GC;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
 
 import com.lowagie.text.pdf.internal.PolylineShape;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -33,7 +35,7 @@ import MWC.GenericData.WorldLocation;
  * @version
  */
 
-public class UdigViewportCanvasAdaptor implements MWC.GUI.CanvasType
+public class UdigViewportCanvasAdaptor implements ControlCanvasType
 {
 
 	private MapViewer _viewer;
@@ -373,5 +375,11 @@ public class UdigViewportCanvasAdaptor implements MWC.GUI.CanvasType
 		// do the old-fashioned copy operation
 		canvas.drawPolyline(xP, yP, len);
 
+	}
+
+	@Override
+	public Control getControl()
+	{
+		return _viewer.getControl();
 	}
 }

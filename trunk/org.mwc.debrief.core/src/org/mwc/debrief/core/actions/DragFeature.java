@@ -23,10 +23,9 @@ import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider;
 import org.mwc.cmap.core.operations.DebriefActionWrapper;
 import org.mwc.cmap.core.property_support.ColorHelper;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
 import org.mwc.cmap.plotViewer.actions.CoreDragAction;
-import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 import org.mwc.debrief.core.DebriefPlugin;
 
 import Debrief.Wrappers.TrackWrapper;
@@ -149,7 +148,7 @@ public class DragFeature extends CoreDragAction
 	 * 
 	 * @author Ian
 	 */
-	public class DragFeatureMode extends SWTChart.PlotMouseDragger
+	public class DragFeatureMode extends PlotMouseDragger
 	{
 
 		/**
@@ -167,7 +166,7 @@ public class DragFeature extends CoreDragAction
 		/**
 		 * the canvas we're updating..
 		 */
-		SWTCanvas _myCanvas;
+		ControlCanvasType _myCanvas;
 
 		private PlainChart _myChart;
 
@@ -195,7 +194,7 @@ public class DragFeature extends CoreDragAction
 		@Override
 		@SuppressWarnings("deprecation")
 		public void doMouseDrag(org.eclipse.swt.graphics.Point pt, int JITTER,
-				Layers theLayers, SWTCanvas theCanvas)
+				Layers theLayers, ControlCanvasType theCanvas)
 		{
 
 			// do we have something selected?
@@ -204,7 +203,7 @@ public class DragFeature extends CoreDragAction
 
 			if (_startPoint != null)
 			{
-				GC gc = new GC(_myCanvas.getCanvas());
+				GC gc = new GC(_myCanvas.getControl());
 
 				// This is the same as a !XOR
 				gc.setXORMode(true);
@@ -226,7 +225,7 @@ public class DragFeature extends CoreDragAction
 					{
 						_newCursor.dispose();
 						_newCursor = getDragCursor();
-						theCanvas.getCanvas().setCursor(_newCursor);
+						theCanvas.getControl().setCursor(_newCursor);
 					}
 				}
 
@@ -267,7 +266,7 @@ public class DragFeature extends CoreDragAction
 		 */
 		@Override
 		public void doMouseMove(final org.eclipse.swt.graphics.Point pt,
-				final int JITTER, final Layers theData, final SWTCanvas theCanvas)
+				final int JITTER, final Layers theData, final ControlCanvasType theCanvas)
 		{
 
 			// check we're not currently dragging something
@@ -326,7 +325,7 @@ public class DragFeature extends CoreDragAction
 					_newCursor = getHotspotCursor(currentNearest._object);
 
 					// and assign it to the control
-					theCanvas.getCanvas().setCursor(_newCursor);
+					theCanvas.getControl().setCursor(_newCursor);
 
 					highlightShown = true;
 
@@ -348,7 +347,7 @@ public class DragFeature extends CoreDragAction
 
 				// and show our special cursor
 				_newCursor = getNormalCursor();
-				theCanvas.getCanvas().setCursor(_newCursor);
+				theCanvas.getControl().setCursor(_newCursor);
 
 			}
 		}
@@ -366,7 +365,7 @@ public class DragFeature extends CoreDragAction
 				return;
 			}
 
-			GC gc = new GC(_myCanvas.getCanvas());
+			GC gc = new GC(_myCanvas.getControl());
 
 			// This is the same as a !XOR
 			gc.setXORMode(true);
@@ -519,7 +518,7 @@ public class DragFeature extends CoreDragAction
 
 		@Override
 		final public void mouseDown(org.eclipse.swt.graphics.Point point,
-				SWTCanvas canvas, PlainChart theChart)
+				ControlCanvasType canvas, PlainChart theChart)
 		{
 			_startPoint = new Point(point.x, point.y);
 			_myCanvas = canvas;

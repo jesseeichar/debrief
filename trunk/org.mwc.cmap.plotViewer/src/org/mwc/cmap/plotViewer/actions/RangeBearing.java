@@ -13,10 +13,9 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.mwc.cmap.core.CorePlugin;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
 import org.mwc.cmap.plotViewer.editors.chart.CoreTracker;
-import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 
 import MWC.Algorithms.Conversions;
 import MWC.GUI.Layers;
@@ -35,7 +34,7 @@ final public class RangeBearing extends CoreDragAction
 	 * 
 	 * @author Ian
 	 */
-	final public static class RangeBearingMode extends SWTChart.PlotMouseDragger
+	final public static class RangeBearingMode extends PlotMouseDragger
 	{
 		/**
 		 * the start point, in world coordinates (so we don't have to calculate it
@@ -56,15 +55,15 @@ final public class RangeBearing extends CoreDragAction
 		/**
 		 * the canvas we're updating..
 		 */
-		SWTCanvas _myCanvas;
+		ControlCanvasType _myCanvas;
 
 		@SuppressWarnings("deprecation")
 		final public void doMouseDrag(Point pt, int JITTER, Layers theLayers,
-				SWTCanvas theCanvas)
+				ControlCanvasType theCanvas)
 		{
 			if (_startPoint != null)
 			{
-				GC gc = new GC(_myCanvas.getCanvas());
+				GC gc = new GC(_myCanvas.getControl());
 
 				// This is the same as a !XOR
 				gc.setXORMode(true);
@@ -101,7 +100,7 @@ final public class RangeBearing extends CoreDragAction
 		@SuppressWarnings("deprecation")
 		final public void doMouseUp(Point point, int keyState)
 		{
-			GC gc = new GC(_myCanvas.getCanvas());
+			GC gc = new GC(_myCanvas.getControl());
 
 			// This is the same as a !XOR
 			gc.setXORMode(true);
@@ -130,7 +129,7 @@ final public class RangeBearing extends CoreDragAction
 			_startLocation = null;
 		}
 
-		final public void mouseDown(Point point, SWTCanvas canvas,
+		final public void mouseDown(Point point, ControlCanvasType canvas,
 				PlainChart theChart)
 		{
 			_startPoint = point;

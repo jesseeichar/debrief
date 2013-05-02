@@ -8,6 +8,7 @@ import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.operations.DebriefActionWrapper;
 import org.mwc.cmap.plotViewer.PlotViewerPlugin;
 import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart;
 
 import MWC.GUI.PlainChart;
 import MWC.GUI.Tools.Action;
@@ -28,7 +29,7 @@ abstract public class CoreDragAction extends CoreEditorAction
 	{
 		// find out what the current dragger is
 		PlainChart chrs = getChart();
-		SWTChart myChart = (SWTChart) chrs;
+		InteractiveChart myChart = (InteractiveChart) chrs;
 
 		SWTChart.PlotMouseDragger oldMode = myChart.getDragMode();
 
@@ -44,7 +45,7 @@ abstract public class CoreDragAction extends CoreEditorAction
 
 		// initialise the cursor
 		final Cursor normalCursor = newMode.getNormalCursor();
-		myChart.getCanvasControl().setCursor(normalCursor);
+		myChart.getCanvas().getControl().setCursor(normalCursor);
 
 		// and wrap it
 		DebriefActionWrapper daw = new DebriefActionWrapper(theAction);
@@ -65,7 +66,7 @@ abstract public class CoreDragAction extends CoreEditorAction
 		 * the editor we're controlling
 		 * 
 		 */
-		private SWTChart _editor;
+		private InteractiveChart _editor;
 
 		/**
 		 * the mode we're switching to
@@ -74,7 +75,7 @@ abstract public class CoreDragAction extends CoreEditorAction
 		private SWTChart.PlotMouseDragger _newMode;
 
 		public SwitchModeAction(final SWTChart.PlotMouseDragger newMode,
-				final SWTChart editor)
+				final InteractiveChart editor)
 		{
 			_editor = editor;
 			_newMode = newMode;

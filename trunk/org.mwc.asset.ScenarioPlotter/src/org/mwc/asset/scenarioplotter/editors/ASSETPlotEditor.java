@@ -29,7 +29,7 @@ import org.mwc.cmap.plotViewer.PlotViewerPlugin;
 import org.mwc.cmap.plotViewer.actions.ExportWMF;
 import org.mwc.cmap.plotViewer.editors.CorePlotEditor;
 import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 
 import ASSET.ScenarioType;
 import ASSET.Scenario.ScenarioSteppedListener;

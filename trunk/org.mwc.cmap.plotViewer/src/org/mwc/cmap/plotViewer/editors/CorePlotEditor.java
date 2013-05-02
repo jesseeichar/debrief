@@ -50,7 +50,7 @@ import org.mwc.cmap.plotViewer.editors.chart.CursorTracker;
 import org.mwc.cmap.plotViewer.editors.chart.RangeTracker;
 import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
 import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.CanvasType;

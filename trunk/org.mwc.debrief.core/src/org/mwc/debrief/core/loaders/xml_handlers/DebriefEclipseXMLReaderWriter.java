@@ -65,7 +65,7 @@ public final class DebriefEclipseXMLReaderWriter extends
 	 * @param version
 	 *          the version number of Debrief that's doing the export
 	 */
-	static public void exportThis(final PlotEditor thePlot,
+	static public void exportThis(final IPlotEditor thePlot,
 			final java.io.OutputStream os, String version)
 	{
 		// first put the plot into an XML document

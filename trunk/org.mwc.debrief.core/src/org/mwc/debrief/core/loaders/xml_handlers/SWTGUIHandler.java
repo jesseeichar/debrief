@@ -161,7 +161,7 @@ abstract public class SWTGUIHandler extends
 	// the constructors for our components
 	// ///////////////////////////////////////////////////////////////////////
 
-	public static void exportThis(PlotEditor thePlot, org.w3c.dom.Element parent,
+	public static void exportThis(IPlotEditor thePlot, org.w3c.dom.Element parent,
 			org.w3c.dom.Document doc)
 	{
 		// create ourselves

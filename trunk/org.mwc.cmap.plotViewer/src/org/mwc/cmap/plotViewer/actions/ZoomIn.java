@@ -10,9 +10,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Tracker;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.operations.DebriefActionWrapper;
-import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 
 import MWC.GUI.Layers;
 import MWC.GUI.PlainChart;
@@ -26,17 +25,17 @@ import MWC.GenericData.WorldLocation;
 public class ZoomIn extends CoreDragAction
 {
 
-	public static class ZoomInMode extends SWTChart.PlotMouseDragger
+	public static class ZoomInMode extends PlotMouseDragger
 	{
 		Point _startPoint;
 
-		SWTCanvas _myCanvas;
+		ControlCanvasType _myCanvas;
 
 		private PlainChart _myChart;
 
 		@Override
 		public void doMouseDrag(final Point pt, final int JITTER,
-				final Layers theLayers, SWTCanvas theCanvas)
+				final Layers theLayers, ControlCanvasType theCanvas)
 		{
 			// just do a check that we have our start point (it may have been cleared
 			// at the end of the move operation)
@@ -45,7 +44,7 @@ public class ZoomIn extends CoreDragAction
 				int deltaX = _startPoint.x - pt.x;
 				int deltaY = _startPoint.y - pt.y;
 
-				Tracker _dragTracker = new Tracker((Composite) _myCanvas.getCanvas(),
+				Tracker _dragTracker = new Tracker((Composite) _myCanvas.getControl(),
 						SWT.RESIZE);
 				Rectangle rect = new Rectangle(_startPoint.x, _startPoint.y, deltaX,
 						deltaY);
@@ -97,7 +96,7 @@ public class ZoomIn extends CoreDragAction
 		}
 
 		@Override
-		public void mouseDown(Point point, SWTCanvas canvas, PlainChart theChart)
+		public void mouseDown(Point point, ControlCanvasType canvas, PlainChart theChart)
 		{
 			_startPoint = point;
 			_myCanvas = canvas;

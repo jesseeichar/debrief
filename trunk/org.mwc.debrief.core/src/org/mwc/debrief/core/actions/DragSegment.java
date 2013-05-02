@@ -19,9 +19,9 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.DataTypes.TrackData.TrackDataProvider;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
 import org.mwc.cmap.plotViewer.editors.chart.CoreTracker;
-import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 import org.mwc.debrief.core.DebriefPlugin;
 import org.mwc.debrief.core.actions.drag.CoreDragOperation;
 import org.mwc.debrief.core.actions.drag.RotateDragMode;
@@ -106,7 +106,7 @@ public class DragSegment extends DragFeature
 
 		@Override
 		public void doMouseDrag(Point pt, int JITTER, Layers theLayers,
-				SWTCanvas theCanvas)
+				ControlCanvasType theCanvas)
 		{
 
 			// let the parent do the leg-work

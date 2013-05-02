@@ -59,7 +59,7 @@ final public class PlotHandler extends
 		});
 	}
 
-	public static org.w3c.dom.Element exportPlot(PlotEditor thePlot,
+	public static org.w3c.dom.Element exportPlot(IPlotEditor thePlot,
 			org.w3c.dom.Document doc, String version)
 	{
 		org.w3c.dom.Element plt = doc.createElement("plot");

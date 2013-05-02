@@ -131,6 +131,7 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.CanvasType;
@@ -140,7 +141,7 @@ import MWC.GenericData.WorldLocation;
 /**
  * Swing implementation of a canvas.
  */
-public class SWTCanvas extends SWTCanvasAdapter
+public class SWTCanvas extends SWTCanvasAdapter implements ControlCanvasType
 {
 
 	// ///////////////////////////////////////////////////////////
@@ -180,9 +181,9 @@ public class SWTCanvas extends SWTCanvasAdapter
 	 * 
 	 * @param projection
 	 */
-	public SWTCanvas(Composite parent, GeoToolsHandler projection)
+	public SWTCanvas(Composite parent, PlainProjection projection)
 	{
-		super((PlainProjection) projection);
+		super(projection);
 		// super(null);
 
 		_myCanvas = new Canvas(parent, SWT.NO_BACKGROUND);
@@ -578,6 +579,12 @@ public class SWTCanvas extends SWTCanvasAdapter
 	}
 
 	public Control getCanvas()
+	{
+		return _myCanvas;
+	}
+	
+	@Override
+	public Control getControl()
 	{
 		return _myCanvas;
 	}

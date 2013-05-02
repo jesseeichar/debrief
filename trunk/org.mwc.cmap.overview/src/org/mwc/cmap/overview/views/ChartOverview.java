@@ -21,9 +21,11 @@ import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.cmap.core.operations.DebriefActionWrapper;
 import org.mwc.cmap.core.ui_support.PartMonitor;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
 import org.mwc.cmap.overview.Activator;
 import org.mwc.cmap.plotViewer.editors.chart.*;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.*;
@@ -345,14 +347,14 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 
 	}
 
-	public class MyZoomMode extends SWTChart.PlotMouseDragger
+	public class MyZoomMode extends PlotMouseDragger
 	{
 		org.eclipse.swt.graphics.Point _startPoint;
 
-		SWTCanvas _myCanvas;
+		ControlCanvasType _myCanvas;
 
 		public void doMouseDrag(final org.eclipse.swt.graphics.Point pt,
-				final int JITTER, final Layers theLayers, SWTCanvas theCanvas)
+				final int JITTER, final Layers theLayers, ControlCanvasType theCanvas)
 		{
 			// just do a check that we have our start point (it may have been cleared
 			// at the end of the move operation)
@@ -362,7 +364,7 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 				int deltaY = _startPoint.y - pt.y;
 				if (Math.abs(deltaX) < JITTER && Math.abs(deltaY) < JITTER)
 					return;
-				Tracker _dragTracker = new Tracker((Composite) _myCanvas.getCanvas(),
+				Tracker _dragTracker = new Tracker((Composite) _myCanvas.getControl(),
 						SWT.RESIZE);
 				Rectangle rect = new Rectangle(_startPoint.x, _startPoint.y, deltaX,
 						deltaY);
@@ -420,7 +422,7 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 		}
 
 		public void mouseDown(org.eclipse.swt.graphics.Point point,
-				SWTCanvas canvas, PlainChart theChart)
+				ControlCanvasType canvas, PlainChart theChart)
 		{
 			_startPoint = point;
 			_myCanvas = canvas;

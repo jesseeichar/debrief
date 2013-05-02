@@ -7,9 +7,8 @@ import org.eclipse.swt.graphics.Cursor;
 import org.eclipse.swt.widgets.Display;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.operations.DebriefActionWrapper;
-import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart;
-import org.mwc.cmap.plotViewer.editors.chart.SWTChart.PlotMouseDragger;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart.PlotMouseDragger;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.Layers;
@@ -26,7 +25,7 @@ import MWC.GenericData.WorldVector;
 public class Pan extends CoreDragAction
 {
 
-	public static class PanMode extends SWTChart.PlotMouseDragger
+	public static class PanMode extends PlotMouseDragger
 	{
 
 		/**
@@ -72,7 +71,7 @@ public class Pan extends CoreDragAction
 		private PlainProjection _theProjection;
 
 		public void doMouseDrag(final org.eclipse.swt.graphics.Point pt,
-				final int JITTER, final Layers theLayers, SWTCanvas theCanvas)
+				final int JITTER, final Layers theLayers, ControlCanvasType theCanvas)
 		{
 			WorldLocation theLocation = theCanvas.getProjection().toWorld(
 					new java.awt.Point(pt.x, pt.y));
@@ -121,7 +120,7 @@ public class Pan extends CoreDragAction
 		}
 
 		public void mouseDown(org.eclipse.swt.graphics.Point point,
-				SWTCanvas canvas, PlainChart theChart)
+				ControlCanvasType canvas, PlainChart theChart)
 		{
 			_theProjection = theChart.getCanvas().getProjection();
 			_theLayers = theChart.getLayers();
@@ -136,7 +135,7 @@ public class Pan extends CoreDragAction
 			_newCursor = getDownCursor();
 
 			// and assign it to the control
-			canvas.getCanvas().setCursor(_newCursor);
+			canvas.getControl().setCursor(_newCursor);
 		}
 
 		/**

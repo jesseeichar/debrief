@@ -938,7 +938,7 @@ public class PlotEditor extends org.mwc.cmap.plotViewer.editors.CorePlotEditor i
 			@Override
 			public SWTCanvas createCanvas(Composite parent1, GtProjection projection)
 			{
-				return new CustomisedSWTCanvas(parent1, _myGeoHandler)
+				return new CustomisedSWTCanvas(parent1, (GtProjection)_myGeoHandler)
 				{
 
 					/**

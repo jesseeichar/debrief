@@ -391,31 +391,32 @@ public final class StepperHandler implements SWTGUIHandler.ComponentCreator
 		GUIHandler.ComponentDetails details = new GUIHandler.ComponentDetails();
 
 		// start off with the painter-highlighter
-		TemporalLayerPainter currentPainter = painterMgr.getCurrentPainter();
-		details.addProperty("Cursor", currentPainter.toString());
-
-		// store the current settings for the painters
-		TemporalLayerPainter[] painterList = painterMgr.getPainterList();
-		for (int i = 0; i < painterList.length; i++)
-		{
-			TemporalLayerPainter thisPainter = painterList[i];
-			storeThisPainter(thisPainter, thisPainter.getName(), details);
+		if(painterMgr != null) {
+			TemporalLayerPainter currentPainter = painterMgr.getCurrentPainter();
+			details.addProperty("Cursor", currentPainter.toString());
+	
+			// store the current settings for the painters
+			TemporalLayerPainter[] painterList = painterMgr.getPainterList();
+			for (int i = 0; i < painterList.length; i++)
+			{
+				TemporalLayerPainter thisPainter = painterList[i];
+				storeThisPainter(thisPainter, thisPainter.getName(), details);
+			}
+	
+			// aah, there's the highlighter as well
+			SWTPlotHighlighter highlighter = painterMgr.getCurrentHighlighter();
+			if (highlighter != null)
+				details.addProperty("Highlighter", highlighter.getName());
+	
+			// and export the other highlighters
+			SWTPlotHighlighter[] highlighterList = painterMgr.getHighlighterList();
+			for (int i = 0; i < highlighterList.length; i++)
+			{
+				SWTPlotHighlighter thisHighlighter = highlighterList[i];
+				storeThisHighlighter(thisHighlighter, thisHighlighter.getName(), details,
+						doc);
+			}
 		}
-
-		// aah, there's the highlighter as well
-		SWTPlotHighlighter highlighter = painterMgr.getCurrentHighlighter();
-		if (highlighter != null)
-			details.addProperty("Highlighter", highlighter.getName());
-
-		// and export the other highlighters
-		SWTPlotHighlighter[] highlighterList = painterMgr.getHighlighterList();
-		for (int i = 0; i < highlighterList.length; i++)
-		{
-			SWTPlotHighlighter thisHighlighter = highlighterList[i];
-			storeThisHighlighter(thisHighlighter, thisHighlighter.getName(), details,
-					doc);
-		}
-
 		// ok, we're switching to exporting the step size in microseconds
 		// if we ever get the plain "StepLarge" parameter - we will assume it is
 		// millis, else

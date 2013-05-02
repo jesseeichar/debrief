@@ -12,4 +12,6 @@ public interface IPlotEditor extends IAdaptable, IControllableViewport {
 
 	void setBackgroundColor(Color theColor);
 
+	Color getBackgroundColor();
+
 }
