@@ -55,7 +55,9 @@ public class UdigViewportCanvasAdaptor implements ControlCanvasType
 
 	public void drawLine(int x1, int y1, int x2, int y2)
 	{
-
+//		if(x1 < MINVAL || x1 > MAXVAL){
+//			throw new IllegalArgumentException(x1+" is not within allowed bounds");
+//		}
 		_dest.drawLine(x1, y1, x2, y2);
 	}
 
@@ -151,7 +153,10 @@ public class UdigViewportCanvasAdaptor implements ControlCanvasType
 
 	public MWC.Algorithms.PlainProjection getProjection()
 	{
-		return new UDigRendererProjection(_viewer.getMap().getViewportModelInternal());
+		UDigRendererProjection uDigRendererProjection = new UDigRendererProjection();
+		uDigRendererProjection.setViewportModel(_viewer.getMap()
+				.getViewportModelInternal());
+		return uDigRendererProjection;
 	}
 
 	public java.awt.Dimension getSize()
@@ -232,7 +237,8 @@ public class UdigViewportCanvasAdaptor implements ControlCanvasType
 	public void drawText(String str, int x, int y)
 	{
 		//
-		_dest.drawString(str, x, y, ViewportGraphics.ALIGN_BOTTOM, ViewportGraphics.ALIGN_LEFT);
+		_dest.drawString(str, x, y, ViewportGraphics.ALIGN_BOTTOM,
+				ViewportGraphics.ALIGN_LEFT);
 	}
 
 	public void drawRect(int x1, int y1, int wid, int height)
@@ -299,14 +305,16 @@ public class UdigViewportCanvasAdaptor implements ControlCanvasType
 			int arcAngle)
 	{
 		//
-		_dest.fill(new Arc2D.Float(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
+		_dest.fill(new Arc2D.Float(x, y, width, height, startAngle, arcAngle,
+				Arc2D.OPEN));
 	}
 
 	public void drawArc(int x, int y, int width, int height, int startAngle,
 			int arcAngle)
 	{
 		//
-		_dest.draw(new Arc2D.Float(x, y, width, height, startAngle, arcAngle, Arc2D.OPEN));
+		_dest.draw(new Arc2D.Float(x, y, width, height, startAngle, arcAngle,
+				Arc2D.OPEN));
 	}
 
 	final public void drawPolyline(int[] points)

@@ -1,5 +1,9 @@
 package org.mwc.cmap.plotViewer.editors.udig;
 
+import static org.mwc.cmap.plotViewer.editors.udig.DebriefMapMouseMotionListener.convertToMouseEvent;
+
+import org.eclipse.swt.events.MouseEvent;
+
 import net.refractions.udig.project.ui.render.displayAdapter.MapMouseEvent;
 import net.refractions.udig.project.ui.render.displayAdapter.MapMouseListener;
 
@@ -16,8 +20,8 @@ public class DebriefMapMouseListener implements MapMouseListener
 	@Override
 	public void mousePressed(MapMouseEvent event)
 	{
-		// TODO Auto-generated method stub
-
+		MouseEvent e = convertToMouseEvent(event, _editor);
+		_editor.getChart().doMouseDown(e);
 	}
 
 	@Override
@@ -25,6 +29,9 @@ public class DebriefMapMouseListener implements MapMouseListener
 	{
 		if(event.buttons == 0 && event.button == MapMouseEvent.BUTTON3) {
 			_editor.openContextMenu(event.x, event.y);
+		} else {
+			MouseEvent e = convertToMouseEvent(event, _editor);
+			_editor.getChart().doMouseUp(e);
 		}
 
 	}
@@ -46,8 +53,8 @@ public class DebriefMapMouseListener implements MapMouseListener
 	@Override
 	public void mouseDoubleClicked(MapMouseEvent event)
 	{
-		// TODO Auto-generated method stub
-
+		MouseEvent e = convertToMouseEvent(event, _editor);
+		_editor.getChart().doMouseDoubleClick(e);
 	}
 
 }

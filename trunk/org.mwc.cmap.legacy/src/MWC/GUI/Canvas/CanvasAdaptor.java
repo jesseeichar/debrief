@@ -8,6 +8,7 @@ package MWC.GUI.Canvas;
 
 import java.awt.BasicStroke;
 import java.awt.Image;
+import java.awt.Stroke;
 import java.awt.image.ImageObserver;
 
 import MWC.GUI.CanvasType;
@@ -209,6 +210,11 @@ public class CanvasAdaptor implements MWC.GUI.CanvasType {
 		java.awt.BasicStroke stk = MWC.GUI.Canvas.Swing.SwingCanvas
 				.getStrokeFor(style);
 		java.awt.Graphics2D g2 = (java.awt.Graphics2D) _dest;
+		Stroke stroke = g2.getStroke();
+		if(stroke instanceof BasicStroke) {
+			BasicStroke bstrk = (BasicStroke) stroke;
+			stk = new BasicStroke(bstrk.getLineWidth(), stk.getEndCap(), stk.getLineJoin(), stk.getMiterLimit(), stk.getDashArray(), stk.getDashPhase());
+		}
 		g2.setStroke(stk);
 	}
 
@@ -217,8 +223,15 @@ public class CanvasAdaptor implements MWC.GUI.CanvasType {
 	 * 
 	 */
 	public void setLineWidth(float width) {
-		java.awt.BasicStroke stk = new BasicStroke(width);
 		java.awt.Graphics2D g2 = (java.awt.Graphics2D) _dest;
+		Stroke stroke = g2.getStroke();
+		BasicStroke stk;
+		if(stroke instanceof BasicStroke) {
+			BasicStroke bstrk = (BasicStroke) stroke;
+			stk = new BasicStroke(width, bstrk.getEndCap(), bstrk.getLineJoin(), bstrk.getMiterLimit(), bstrk.getDashArray(), bstrk.getDashPhase());
+		} else {
+			stk = new BasicStroke(width);
+		}
 		g2.setStroke(stk);
 	}
 

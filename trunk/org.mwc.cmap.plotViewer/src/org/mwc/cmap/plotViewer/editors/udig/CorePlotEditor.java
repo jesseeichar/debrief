@@ -14,6 +14,7 @@ import net.refractions.udig.project.ProjectBlackboardConstants;
 import net.refractions.udig.project.internal.Map;
 import net.refractions.udig.project.internal.commands.AddLayersCommand;
 import net.refractions.udig.project.internal.commands.CreateMapCommand;
+import net.refractions.udig.project.internal.render.ViewportModel;
 import net.refractions.udig.project.render.IViewportModel;
 import net.refractions.udig.project.ui.ApplicationGIS;
 import net.refractions.udig.project.ui.internal.MapPart;
@@ -21,7 +22,9 @@ import net.refractions.udig.project.ui.tool.IMapEditorSelectionProvider;
 import net.refractions.udig.project.ui.viewers.MapViewer;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IStatusLineManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -39,24 +42,37 @@ import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.operations.RedoActionHandler;
+import org.eclipse.ui.operations.UndoActionHandler;
 import org.eclipse.ui.part.EditorPart;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.cmap.core.property_support.EditableWrapper;
 import org.mwc.cmap.core.property_support.RightClickSupport;
+import org.mwc.cmap.core.ui_support.PartMonitor;
+import org.mwc.cmap.plotViewer.actions.ExportWMF;
 import org.mwc.cmap.plotViewer.actions.IChartBasedEditor;
+import org.mwc.cmap.plotViewer.editors.chart.CursorTracker;
+import org.mwc.cmap.plotViewer.editors.chart.RangeTracker;
 import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas.LocationSelectedAction;
 
+import MWC.Algorithms.PlainProjection;
 import MWC.GUI.Editable;
 import MWC.GUI.Layer;
 import MWC.GUI.Layers;
-import MWC.GUI.PlainChart;
-import MWC.GUI.Plottable;
 import MWC.GUI.Layers.DataListener2;
+import MWC.GUI.Plottable;
+import MWC.GUI.Tools.Chart.DblClickEdit;
 import MWC.GUI.Tools.Chart.HitTester;
 import MWC.GUI.Tools.Chart.RightClickEdit;
 import MWC.GUI.Tools.Chart.RightClickEdit.ObjectConstruct;
+import MWC.GenericData.WorldArea;
 import MWC.GenericData.WorldLocation;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -127,6 +143,8 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	private ISelection _currentSelection;
 	private float _lineThickness;
 	private UdigChart _chart;
+	private PartMonitor _myPartMonitor;
+	private PlainProjection _projection;
 
 	public CorePlotEditor()
 	{
@@ -173,7 +191,6 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				super.removeThisLayer(theLayer);
 			}
 		};
-		
 
 		_listenForMods = new DataListener2()
 		{
@@ -206,16 +223,16 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		_myLayers.addDataModifiedListener(_listenForMods);
 		_myLayers.addDataReformattedListener(_listenForMods);
 
-		
 	}
+
 	/**
 	 * make a note that the data is now dirty, and needs saving.
 	 */
 	public void fireDirty()
 	{
-		if (!_ignoreDirtyCalls )
+		if (!_ignoreDirtyCalls)
 		{
-			_plotIsDirty  = true;
+			_plotIsDirty = true;
 			Display.getDefault().asyncExec(new Runnable()
 			{
 
@@ -235,6 +252,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 
 	}
+
 	/**
 	 * hmm, are we dirty?
 	 * 
@@ -244,6 +262,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		return _plotIsDirty;
 	}
+
 	// TODO
 	@Override
 	public void addSelectionChangedListener(ISelectionChangedListener listener)
@@ -272,17 +291,130 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		_viewer.setMap(_map);
 		_viewer.init(this);
 
-		if(_backgroundColor != null) {
+		if (_projection != null)
+		{
+			setProjection(_projection);
+		}
+
+		if (_backgroundColor != null)
+		{
 			setBackgroundColor(_backgroundColor);
 		}
 
 		this._canvas = new UdigViewportCanvasAdaptor(_viewer);
 		this._chart = new UdigChart(this);
-		
+
 		_viewer.getViewport().addMouseListener(new DebriefMapMouseListener(this));
 		_viewer.getViewport().addMouseMotionListener(
 				new DebriefMapMouseMotionListener(this));
 		_viewer.getViewport().addPaneListener(new DebriefMapDisplayListener(this));
+
+		getChart().addCursorDblClickedListener(new DblClickEdit(null)
+		{
+			private static final long serialVersionUID = 1L;
+
+			protected void addEditor(Plottable res, EditorType e, Layer parentLayer)
+			{
+				selectPlottable(res, parentLayer);
+			}
+
+			protected void handleItemNotFound(PlainProjection projection)
+			{
+				putBackdropIntoProperties();
+			}
+		});
+
+		// and over-ride the undo button
+		IAction undoAction = new UndoActionHandler(getEditorSite(),
+				CorePlugin.CMAP_CONTEXT);
+		IAction redoAction = new RedoActionHandler(getEditorSite(),
+				CorePlugin.CMAP_CONTEXT);
+
+		getEditorSite().getActionBars().setGlobalActionHandler(
+				ActionFactory.UNDO.getId(), undoAction);
+		getEditorSite().getActionBars().setGlobalActionHandler(
+				ActionFactory.REDO.getId(), redoAction);
+
+		IAction _copyClipboardAction = new Action()
+		{
+			public void runWithEvent(Event event)
+			{
+				ExportWMF ew = new ExportWMF(true, false);
+				ew.run(null);
+			}
+		};
+
+		IActionBars actionBars = getEditorSite().getActionBars();
+		actionBars.setGlobalActionHandler(ActionFactory.COPY.getId(),
+				_copyClipboardAction);
+
+		// listen out for us losing focus - so we can drop the selection
+		listenForMeLosingFocus();
+
+		// listen out for us gaining focus - so we can set the cursort tracker
+		listenForMeGainingFocus();
+	}
+
+	private void listenForMeLosingFocus()
+	{
+		_myPartMonitor = new PartMonitor(getSite().getWorkbenchWindow()
+				.getPartService());
+		_myPartMonitor.addPartListener(CorePlotEditor.class,
+				PartMonitor.DEACTIVATED, new PartMonitor.ICallback()
+				{
+					public void eventTriggered(String type, Object instance,
+							IWorkbenchPart parentPart)
+					{
+						boolean isMe = checkIfImTheSameAs(instance);
+						if (isMe)
+							_currentSelection = null;
+					}
+				});
+	}
+
+	private void listenForMeGainingFocus()
+	{
+		final EditorPart linkToMe = this;
+		_myPartMonitor = new PartMonitor(getSite().getWorkbenchWindow()
+				.getPartService());
+		_myPartMonitor.addPartListener(CorePlotEditor.class, PartMonitor.ACTIVATED,
+				new PartMonitor.ICallback()
+				{
+					public void eventTriggered(String type, Object instance,
+							IWorkbenchPart parentPart)
+					{
+						if (type == PartMonitor.ACTIVATED)
+						{
+							boolean isMe = checkIfImTheSameAs(instance);
+							if (isMe)
+							{
+								// tell the cursor track that we're it's bitch.
+								RangeTracker.displayResultsIn(linkToMe);
+								CursorTracker.trackThisChart(getChart(), linkToMe);
+							}
+						}
+					}
+				});
+	}
+
+	boolean checkIfImTheSameAs(Object target1)
+	{
+		boolean res = false;
+		// is it me?
+		if (target1 == this)
+			res = true;
+		else
+		{
+			res = false;
+		}
+		return res;
+	}
+
+	final void putBackdropIntoProperties()
+	{
+		ISelection sel = new StructuredSelection(this);
+		fireSelectionChanged(sel);
+
 	}
 
 	@Override
@@ -349,7 +481,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		int x = size.x / 2;
 		int y = size.y / 2;
 
-		openContextMenu(x,y);
+		openContextMenu(x, y);
 	}
 
 	@Override
@@ -393,12 +525,12 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		MenuManager mmgr = new MenuManager();
 		Point scrPoint = new Point(x, y);
- 		IViewportModel viewportModel = _map.getViewportModel();
+		IViewportModel viewportModel = _map.getViewportModel();
 		Coordinate worldCoordinate = viewportModel.pixelToWorld(x, y);
 		WorldLocation loc = JtsAdapter.toWorldLocation(worldCoordinate);
 
 		addCopyLocationItem(mmgr, scrPoint, loc);
-		
+
 		Layers theData = _myLayers;
 
 		double layerDist = -1;
@@ -451,7 +583,8 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 				{ theParent }, new Layer[]
 				{ theParent }, _myLayers, false);
 
-			// JESSE - this method is undefined in the current build:	doSupplementalRightClickProcessing(mmgr, res, theParent);
+				// JESSE - this method is undefined in the current build:
+				// doSupplementalRightClickProcessing(mmgr, res, theParent);
 			}
 		}
 		else
@@ -503,9 +636,10 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 			@Override
 			public void run()
 			{
-				 EditableWrapper wrapped = new EditableWrapper(CorePlotEditor.this, _myLayers);
-				 ISelection selected = new StructuredSelection(wrapped);
-				 fireSelectionChanged(selected);
+				EditableWrapper wrapped = new EditableWrapper(CorePlotEditor.this,
+						_myLayers);
+				ISelection selected = new StructuredSelection(wrapped);
+				fireSelectionChanged(selected);
 			}
 
 		};
@@ -569,30 +703,39 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	{
 		MessageDialog.openInformation(Display.getCurrent().getActiveShell(),
 				"Not implemented", "I have not implemented this yet");
-		new UnsupportedOperationException("I have not implemented this yet").printStackTrace();
+		new UnsupportedOperationException("I have not implemented this yet")
+				.printStackTrace();
 	}
 
 	public Color getBackgroundColor()
 	{
 		return _backgroundColor;
 	}
+
 	public void setBackgroundColor(Color backgroundColor)
 	{
 		this._backgroundColor = backgroundColor;
-		if (_viewer != null) {
-			_viewer.getMap().getBlackboard().put(ProjectBlackboardConstants.MAP__BACKGROUND_COLOR, _backgroundColor);
+		if (_viewer != null)
+		{
+			_viewer
+					.getMap()
+					.getBlackboard()
+					.put(ProjectBlackboardConstants.MAP__BACKGROUND_COLOR,
+							_backgroundColor);
 			_viewer.getRenderManager().refresh(null);
 		}
 	}
 
-	public void setLineThickness (float lineThickness) {
+	public void setLineThickness(float lineThickness)
+	{
 		this._lineThickness = lineThickness;
 	}
-	
-	public float getLineThickness () {
+
+	public float getLineThickness()
+	{
 		return _lineThickness;
 	}
-	
+
 	public void fireSelectionChanged(ISelection sel)
 	{
 		// just double-check that we're not already processing this
@@ -614,6 +757,7 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 			}
 		}
 	}
+
 	public Layers getLayers()
 	{
 		return _myLayers;
@@ -626,9 +770,58 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 	}
 
 	@Override
-	public void selectPlottable(Plottable shape, Layer layer)
+	public void selectPlottable(Plottable target1, Layer parentLayer)
 	{
-		// TODO Auto-generated method stub
-		
+		CorePlugin.logError(Status.INFO,
+				"Double-click processed, opening property editor for:" + target1, null);
+		EditableWrapper parentP = new EditableWrapper(parentLayer, null, getChart()
+				.getLayers());
+		EditableWrapper wrapped = new EditableWrapper(target1, parentP, getChart()
+				.getLayers());
+		ISelection selected = new StructuredSelection(wrapped);
+		fireSelectionChanged(selected);
 	}
+
+	public WorldArea getViewport()
+	{
+		return getChart().getCanvas().getProjection().getDataArea();
+	}
+
+	public void setViewport(WorldArea target)
+	{
+		getChart().getCanvas().getProjection().setDataArea(target);
+	}
+
+	public void setProjection(PlainProjection proj)
+	{
+		if (_map == null)
+		{
+			_projection = proj;
+		}
+		else if (proj != null)
+		{
+			WorldArea dataArea = proj.getDataArea();
+			ReferencedEnvelope env = JtsAdapter.toEnvelope(dataArea);
+			ViewportModel viewportModelInternal = _viewer.getRenderManager()
+					.getViewportModelInternal();
+			viewportModelInternal.setBounds(env);
+			_projection = null;
+		}
+	}
+
+	public PlainProjection getProjection()
+	{
+		return getChart().getCanvas().getProjection();
+	}
+
+	public void update()
+	{
+		getChart().update();
+	}
+
+	public void rescale()
+	{
+		getChart().rescale();
+	}
+
 }

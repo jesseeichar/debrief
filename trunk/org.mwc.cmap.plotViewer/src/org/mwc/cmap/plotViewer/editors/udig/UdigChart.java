@@ -6,16 +6,12 @@ import java.awt.Rectangle;
 import java.io.IOException;
 import java.util.List;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
-import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
-import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
-
 import net.refractions.udig.project.ILayer;
 
-import MWC.GUI.CanvasType;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.mwc.cmap.core.ui_support.udig.ControlCanvasType;
+
 import MWC.GUI.Layer;
-import MWC.GUI.PlainChart;
 
 public class UdigChart extends InteractiveChart
 {

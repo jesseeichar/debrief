@@ -87,14 +87,14 @@ import MWC.GUI.Editable;
 import MWC.GUI.Layer;
 import MWC.GUI.Layers;
 import MWC.GenericData.WatchableList;
-import MWC.GenericData.WorldArea;
 import MWC.GenericData.WorldDistance;
 import MWC.TacticalData.IRollingNarrativeProvider;
 
 /**
  * @author Jesse
  */
-public class PlotEditor extends CorePlotEditor implements IPlotEditor {
+public class PlotEditor extends CorePlotEditor implements IPlotEditor
+{
 
 	private static final String PLUGIN_ID = "org.mwc.debrief.core";
 	// Extension point tag and attributes in plugin.xml
@@ -121,7 +121,7 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 	private TimeManager _timeManager;
 	private TimeControlProperties _timePreferences;
 	private EditorType _myEditor;
-	
+
 	public PlotEditor()
 	{
 
@@ -137,23 +137,25 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 					WatchableList[] secondaries)
 			{
 				notImplementedDialog();
-//				fireDirty();
+				// fireDirty();
 			}
 		});
 
 		// create the time manager. cool
 		_timeManager = new TimeManager();
-//		_timeManager.addListener(_timeListener,
-//				TimeProvider.TIME_CHANGED_PROPERTY_NAME);
+		// _timeManager.addListener(_timeListener,
+		// TimeProvider.TIME_CHANGED_PROPERTY_NAME);
 
 		// and how time is managed
 		_timePreferences = new TimeControlProperties();
-		
+
 		_myEditor = new PlotEditorEditorType(this);
 	}
+
 	@Override
 	public void init(IEditorSite site, IEditorInput input)
-			throws PartInitException {
+			throws PartInitException
+	{
 		setSite(site);
 		setInputWithNotify(input);
 
@@ -163,19 +165,24 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 
 		// and start the load
 		loadThisFile(input);
-
-		ViewportModel viewportModel = _map.getViewportModelInternal();
-		try {
-			viewportModel.eSetDeliver(false); // we don't need event to rerender yet
-			ReferencedEnvelope envelope = JtsAdapter.toEnvelope(_myLayers.getBounds());
-			viewportModel.setBounds(envelope);
-		} finally {
-			viewportModel.eSetDeliver(true);			
-		}
+//
+//		ViewportModel viewportModel = _map.getViewportModelInternal();
+//		try
+//		{
+//			viewportModel.eSetDeliver(false); // we don't need event to rerender yet
+//			ReferencedEnvelope envelope = JtsAdapter
+//					.toEnvelope(_myLayers.getBounds());
+//			viewportModel.setBounds(envelope);
+//		}
+//		finally
+//		{
+//			viewportModel.eSetDeliver(true);
+//		}
 
 		// lastly, set the title (if we have one)
 		this.setPartName(input.getName());
 	}
+
 	private void initialiseFileLoaders()
 	{
 		// hey - sort out our plot readers
@@ -266,6 +273,7 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 			CorePlugin.logError(Status.ERROR, "Problem loading data file", e);
 		}
 	}
+
 	private void loadThisStream(InputStream is, String fileName)
 	{
 		// right, see if any of them will do our edit
@@ -404,7 +412,8 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 	 * IProgressMonitor)
 	 */
 	@Override
-	public void doSave(IProgressMonitor monitor) {
+	public void doSave(IProgressMonitor monitor)
+	{
 		IEditorInput input = getEditorInput();
 		String ext = null;
 
@@ -726,8 +735,8 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 			}
 			catch (CoreException e)
 			{
-				CorePlugin
-				.logError(Status.ERROR, "Refresh failed after saving new file", e);
+				CorePlugin.logError(Status.ERROR,
+						"Refresh failed after saving new file", e);
 			}
 			finally
 			{
@@ -778,7 +787,6 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 		}
 		return "";
 	}
-
 
 	/**
 	 * save our plot to the indicated location
@@ -831,7 +839,8 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 	 * @see org.eclipse.ui.part.EditorPart#isSaveAsAllowed()
 	 */
 	@Override
-	public boolean isSaveAsAllowed() {
+	public boolean isSaveAsAllowed()
+	{
 		return true;
 	}
 
@@ -842,31 +851,32 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 	 */
 	public void loadingComplete(Object source)
 	{
-//  TODO
-//		// ok, stop listening for dirty calls - since there will be so many and
-//		// we
-//		// don't want
-//		// to start off with a dirty plot
-//		startIgnoringDirtyCalls();
-//
-//		DebriefPlugin.logError(Status.INFO, "File load received", null);
-//
-//		// and update the time management bits
-//		TimePeriod timePeriod = getPeriodFor(_myLayers);
-//
-//		if (timePeriod != null)
-//		{
-//			_timeManager.setPeriod(this, timePeriod);
-//
-//			// also give it a current DTG (if it doesn't have one)
-//			if (_timeManager.getTime() == null)
-//				_timeManager.setTime(this, timePeriod.getStartDTG(), false);
-//		}
-//
-//		// done - now we can process dirty calls again
-//		stopIgnoringDirtyCalls();
+		// TODO
+		// // ok, stop listening for dirty calls - since there will be so many and
+		// // we
+		// // don't want
+		// // to start off with a dirty plot
+		// startIgnoringDirtyCalls();
+		//
+		// DebriefPlugin.logError(Status.INFO, "File load received", null);
+		//
+		// // and update the time management bits
+		// TimePeriod timePeriod = getPeriodFor(_myLayers);
+		//
+		// if (timePeriod != null)
+		// {
+		// _timeManager.setPeriod(this, timePeriod);
+		//
+		// // also give it a current DTG (if it doesn't have one)
+		// if (_timeManager.getTime() == null)
+		// _timeManager.setTime(this, timePeriod.getStartDTG(), false);
+		// }
+		//
+		// // done - now we can process dirty calls again
+		// stopIgnoringDirtyCalls();
 
 	}
+
 	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter)
 	{
@@ -890,18 +900,18 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 			res = _canvas.getProjection();
 		}
 		// TODO
-//		else if (adapter == TimeControllerOperationStore.class)
-//		{
-//			res = getTimeControllerOperations();
-//		}
-//		else if (adapter == LayerPainterManager.class)
-//		{
-//			res = _layerPainterManager;
-//		}
-//		else if (adapter == ControllablePeriod.class)
-//		{
-//			res = _myOperations;
-//		}
+		// else if (adapter == TimeControllerOperationStore.class)
+		// {
+		// res = getTimeControllerOperations();
+		// }
+		// else if (adapter == LayerPainterManager.class)
+		// {
+		// res = _layerPainterManager;
+		// }
+		// else if (adapter == ControllablePeriod.class)
+		// {
+		// res = _myOperations;
+		// }
 		else if (adapter == TimeControlPreferences.class)
 		{
 			res = _timePreferences;
@@ -914,23 +924,23 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 		{
 			res = _timeManager;
 		}
-//		else if (adapter == IGotoMarker.class)
-//		{
-//			return new IGotoMarker()
-//			{
-//				public void gotoMarker(IMarker marker)
-//				{
-//					String lineNum = marker.getAttribute(IMarker.LINE_NUMBER, "na");
-//					if (lineNum != "na")
-//					{
-//						// right, convert to DTG
-//						HiResDate tNow = new HiResDate(0, Long.parseLong(lineNum));
-//						_timeManager.setTime(this, tNow, true);
-//					}
-//				}
-//
-//			};
-//		}
+		// else if (adapter == IGotoMarker.class)
+		// {
+		// return new IGotoMarker()
+		// {
+		// public void gotoMarker(IMarker marker)
+		// {
+		// String lineNum = marker.getAttribute(IMarker.LINE_NUMBER, "na");
+		// if (lineNum != "na")
+		// {
+		// // right, convert to DTG
+		// HiResDate tNow = new HiResDate(0, Long.parseLong(lineNum));
+		// _timeManager.setTime(this, tNow, true);
+		// }
+		// }
+		//
+		// };
+		// }
 
 		else if (adapter == IRollingNarrativeProvider.class)
 		{
@@ -953,65 +963,65 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 		}
 		else if (adapter == RelativeProjectionParent.class)
 		{ // TODO
-//			if (_myRelativeWrapper == null)
-//			{
-//				_myRelativeWrapper = new RelativeProjectionParent()
-//				{
-//
-//					public double getHeading()
-//					{
-//						double res1 = 0.0;
-//						Watchable thePos = getFirstPosition(_trackDataProvider,
-//								_timeManager);
-//
-//						if (thePos != null)
-//						{
-//							// yup, get the centre point
-//							res1 = thePos.getCourse();
-//						}
-//
-//						return res1;
-//					}
-//
-//					public WorldLocation getLocation()
-//					{
-//						MWC.GenericData.WorldLocation res1 = null;
-//						Watchable thePos = getFirstPosition(_trackDataProvider,
-//								_timeManager);
-//
-//						if (thePos != null)
-//						{
-//							// yup, get the centre point
-//							res1 = thePos.getBounds().getCentre();
-//						}
-//						return res1;
-//					}
-//
-//					private Watchable getFirstPosition(TrackDataProvider provider,
-//							TimeManager manager)
-//					{
-//						Watchable res = null;
-//
-//						// do we have a primary?
-//						WatchableList priTrack = provider.getPrimaryTrack();
-//						if (priTrack == null)
-//						{
-//							CorePlugin.logError(Status.ERROR,
-//									"Can't do relative projection without primary track", null);
-//						}
-//						else
-//						{
-//							Watchable[] list = priTrack.getNearestTo(manager.getTime());
-//							if (list != null)
-//								if (list.length > 0)
-//									res = list[0];
-//						}
-//
-//						return res;
-//					}
-//				};
-//			}
-//			res = _myRelativeWrapper;
+		// if (_myRelativeWrapper == null)
+		// {
+		// _myRelativeWrapper = new RelativeProjectionParent()
+		// {
+		//
+		// public double getHeading()
+		// {
+		// double res1 = 0.0;
+		// Watchable thePos = getFirstPosition(_trackDataProvider,
+		// _timeManager);
+		//
+		// if (thePos != null)
+		// {
+		// // yup, get the centre point
+		// res1 = thePos.getCourse();
+		// }
+		//
+		// return res1;
+		// }
+		//
+		// public WorldLocation getLocation()
+		// {
+		// MWC.GenericData.WorldLocation res1 = null;
+		// Watchable thePos = getFirstPosition(_trackDataProvider,
+		// _timeManager);
+		//
+		// if (thePos != null)
+		// {
+		// // yup, get the centre point
+		// res1 = thePos.getBounds().getCentre();
+		// }
+		// return res1;
+		// }
+		//
+		// private Watchable getFirstPosition(TrackDataProvider provider,
+		// TimeManager manager)
+		// {
+		// Watchable res = null;
+		//
+		// // do we have a primary?
+		// WatchableList priTrack = provider.getPrimaryTrack();
+		// if (priTrack == null)
+		// {
+		// CorePlugin.logError(Status.ERROR,
+		// "Can't do relative projection without primary track", null);
+		// }
+		// else
+		// {
+		// Watchable[] list = priTrack.getNearestTo(manager.getTime());
+		// if (list != null)
+		// if (list.length > 0)
+		// res = list[0];
+		// }
+		//
+		// return res;
+		// }
+		// };
+		// }
+		// res = _myRelativeWrapper;
 		}
 
 		// did we find anything?
@@ -1024,48 +1034,19 @@ public class PlotEditor extends CorePlotEditor implements IPlotEditor {
 		// ok, done
 		return res;
 	}
-	
-	// TODO implement the following methods
-	@Override
-	public void setViewport(WorldArea target) {
-		// TODO Auto-generated method stub
-		
-	}
-	@Override
-	public WorldArea getViewport() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override
-	public void setProjection(PlainProjection proj) {
-		// TODO Auto-generated method stub
-		
-	}
-	@Override
-	public PlainProjection getProjection() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	@Override
-	public void update() {
-		// TODO Auto-generated method stub
-		
-	}
-	@Override
-	public void rescale() {
-		// TODO Auto-generated method stub
-		
-	}
+
 	@Override
 	public String getName()
 	{
 		return "PlotEditor";
 	}
+
 	@Override
 	public boolean hasEditor()
 	{
 		return true;
 	}
+
 	@Override
 	public EditorType getInfo()
 	{

@@ -3,6 +3,7 @@ package org.mwc.cmap.plotViewer.editors.chart;
 import org.eclipse.ui.part.EditorPart;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.gridharness.LocationFormatPreferencePage;
+import org.mwc.cmap.plotViewer.editors.udig.InteractiveChart;
 
 import MWC.GUI.Layers;
 import MWC.GUI.PlainChart;
@@ -28,7 +29,7 @@ public class CursorTracker extends CoreTracker
 	/**
 	 * the projection we're looking at
 	 */
-	private SWTChart _myChart;
+	private InteractiveChart _myChart;
 	/**
 	 * something to listen out for chart movement
 	 * 
@@ -95,7 +96,7 @@ public class CursorTracker extends CoreTracker
 	 * @param editor
 	 * @param chart
 	 */
-	private void storeSettings(EditorPart editor, SWTChart chart)
+	private void storeSettings(EditorPart editor, InteractiveChart chart)
 	{
 		// do the parent's store bit
 		CoreTracker.storeSettings(this, editor);
@@ -116,7 +117,7 @@ public class CursorTracker extends CoreTracker
 	 * @param chart
 	 *          the chart who's mouse movements we now track
 	 */
-	public static void trackThisChart(SWTChart chart, EditorPart editor)
+	public static void trackThisChart(InteractiveChart chart, EditorPart editor)
 	{
 		if ((_singleton == null) || (_singleton._myEditor != editor))
 		{

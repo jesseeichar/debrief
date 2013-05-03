@@ -1,8 +1,9 @@
 package org.mwc.cmap.plotViewer.editors.udig;
 
-import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -53,9 +54,22 @@ public class PlottableRenderer extends MultiLayerRendererImpl
 	public void render(Graphics2D destination, IProgressMonitor monitor)
 			throws RenderException
 	{
-		PlainProjection proj = new UDigRendererProjection((ViewportModel) getContext().getMap().getViewportModel());
+		
+		configureGraphics(destination);
+		
+		UDigRendererProjection proj = new UDigRendererProjection();
+		proj.setViewportModel((ViewportModel) getContext().getMap().getViewportModel());
 
-		CanvasType dest = new CanvasAdaptor(proj, destination);
+		CanvasType dest = new CanvasAdaptor(proj, destination) {
+			@Override
+			public void setLineWidth(float width)
+			{
+				if (width <= 1) {
+					width += .5;
+				}
+				super.setLineWidth(width);
+			}
+		};
 		
 		for (MWC.GUI.Layer layer : getLayers())
 		{
@@ -64,6 +78,27 @@ public class PlottableRenderer extends MultiLayerRendererImpl
 				layer.paint(dest);
 			}
 		}
+	}
+
+	private void configureGraphics(Graphics2D destination)
+	{
+		RenderingHints hints = new RenderingHints(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+    hints.add(new RenderingHints(RenderingHints.KEY_DITHERING,
+            RenderingHints.VALUE_DITHER_DISABLE));
+    hints.add(new RenderingHints(RenderingHints.KEY_ALPHA_INTERPOLATION,
+            RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED));
+    hints.add(new RenderingHints(RenderingHints.KEY_COLOR_RENDERING,
+            RenderingHints.VALUE_COLOR_RENDER_SPEED));
+    hints.add(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
+            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+    hints.add(new RenderingHints(RenderingHints.KEY_STROKE_CONTROL,
+            RenderingHints.VALUE_STROKE_PURE));
+    hints.add(new RenderingHints(RenderingHints.KEY_FRACTIONALMETRICS,
+            RenderingHints.VALUE_FRACTIONALMETRICS_OFF));
+
+    hints.add(new RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON));
+
+    destination.addRenderingHints(hints);
 	}
 
 	@Override
