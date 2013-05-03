@@ -49,7 +49,6 @@ import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.operations.RedoActionHandler;
 import org.eclipse.ui.operations.UndoActionHandler;
 import org.eclipse.ui.part.EditorPart;
-import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.cmap.core.property_support.EditableWrapper;
@@ -93,12 +92,10 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 			{
 				try
 				{
-
 					MWC.GUI.Layer next = queue.take();
 					sleep(200); // sleep to give system time to put all layers in queue
 					LinkedList<IGeoResource> resources = new LinkedList<IGeoResource>();
 
-					ReferencedEnvelope bounds = _map.getViewportModelInternal().getBounds();
 					while (next != null)
 					{
 						PlottableGeoResource resource = PlottableService.INSTANCE
@@ -110,9 +107,6 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 					AddLayersCommand cmd = new AddLayersCommand(resources);
 					cmd.setMap(_map);
 					cmd.run(new NullProgressMonitor());
-					if (!bounds.isNull()) {
-						_map.getViewportModelInternal().setBounds(bounds);
-					}
 				}
 				catch (Exception e)
 				{

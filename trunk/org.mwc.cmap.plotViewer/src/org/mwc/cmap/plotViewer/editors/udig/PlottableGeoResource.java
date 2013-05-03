@@ -26,7 +26,7 @@ public class PlottableGeoResource extends IGeoResource
 		_id = CorePlugin.createSafeURL(PlottableServiceExtension.ID + "#"
 				+ UUID.randomUUID());
 
-		ReferencedEnvelope jtsBounds = JtsAdapter.transform(JtsAdapter.toEnvelope(theLayer.getBounds()));
+		ReferencedEnvelope jtsBounds = JtsAdapter.toEnvelope(theLayer.getBounds());
 
 		CoordinateReferenceSystem crs = jtsBounds.getCoordinateReferenceSystem();
 		info = new IGeoResourceInfo(_layer.getName(), _layer.getName(),
