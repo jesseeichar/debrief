@@ -14,7 +14,6 @@ import net.refractions.udig.project.ProjectBlackboardConstants;
 import net.refractions.udig.project.internal.Map;
 import net.refractions.udig.project.internal.commands.AddLayersCommand;
 import net.refractions.udig.project.internal.commands.CreateMapCommand;
-import net.refractions.udig.project.internal.render.ViewportModel;
 import net.refractions.udig.project.render.IViewportModel;
 import net.refractions.udig.project.ui.ApplicationGIS;
 import net.refractions.udig.project.ui.internal.MapPart;
@@ -50,7 +49,6 @@ import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.operations.RedoActionHandler;
 import org.eclipse.ui.operations.UndoActionHandler;
 import org.eclipse.ui.part.EditorPart;
-import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.interfaces.IControllableViewport;
 import org.mwc.cmap.core.property_support.EditableWrapper;
@@ -291,6 +289,9 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		_viewer.setMap(_map);
 		_viewer.init(this);
 
+		this._canvas = new UdigViewportCanvasAdaptor(_viewer);
+		this._chart = new UdigChart(this);
+		
 		if (_projection != null)
 		{
 			setProjection(_projection);
@@ -300,9 +301,6 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 		{
 			setBackgroundColor(_backgroundColor);
 		}
-
-		this._canvas = new UdigViewportCanvasAdaptor(_viewer);
-		this._chart = new UdigChart(this);
 
 		_viewer.getViewport().addMouseListener(new DebriefMapMouseListener(this));
 		_viewer.getViewport().addMouseMotionListener(
@@ -794,17 +792,17 @@ public abstract class CorePlotEditor extends EditorPart implements MapPart,
 
 	public void setProjection(PlainProjection proj)
 	{
-		if (_map == null)
+		if (getChart() == null)
 		{
 			_projection = proj;
 		}
-		else if (proj != null)
+		else
 		{
-			WorldArea dataArea = proj.getDataArea();
-			ReferencedEnvelope env = JtsAdapter.toEnvelope(dataArea);
-			ViewportModel viewportModelInternal = _viewer.getRenderManager()
-					.getViewportModelInternal();
-			viewportModelInternal.setBounds(env);
+			if (proj != null)
+			{
+				PlainProjection udigProj = getChart().getCanvas().getProjection();
+				udigProj.setDataArea(proj.getDataArea());
+			}
 			_projection = null;
 		}
 	}

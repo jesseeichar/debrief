@@ -41,6 +41,8 @@ public class UDigRendererProjection extends PlainProjection
 				String id = event.getPropertyName();
 				if (PlainProjection.PAN_EVENT.equals(id)) {
 					WorldArea newBounds = (WorldArea) event.getNewValue();
+					newBounds.trim();  // trim to reasonable bounds;
+					gtTrim(newBounds);
 					ReferencedEnvelope envelope = JtsAdapter.toEnvelope(newBounds);
 					_viewportModel.setBounds(envelope);
 				} else if (PlainProjection.REPLACED_EVENT.equals(id)) {
@@ -50,6 +52,20 @@ public class UDigRendererProjection extends PlainProjection
 				}
 			}
 		});
+	}
+
+	private void gtTrim(WorldArea theArea)
+	{
+		gtTrim(theArea.getTopLeft());
+		gtTrim(theArea.getBottomRight());
+	}
+	private void gtTrim(WorldLocation loc)
+	{
+		loc.setLat(Math.min(loc.getLat(), 89.9999));
+		loc.setLat(Math.max(loc.getLat(), -89.9999));
+
+		loc.setLong(Math.min(loc.getLong(), 179.999));
+		loc.setLong(Math.max(loc.getLong(), -179.999));
 	}
 
 	@Override

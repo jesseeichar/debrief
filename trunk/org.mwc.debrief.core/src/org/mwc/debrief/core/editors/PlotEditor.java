@@ -941,9 +941,6 @@ public class PlotEditor extends org.mwc.cmap.plotViewer.editors.CorePlotEditor i
 				return new CustomisedSWTCanvas(parent1, (GtProjection)_myGeoHandler)
 				{
 
-					/**
-					 * 
-					 */
 					private static final long serialVersionUID = 1L;
 
 					public void parentFireSelectionChanged(ISelection selected)
