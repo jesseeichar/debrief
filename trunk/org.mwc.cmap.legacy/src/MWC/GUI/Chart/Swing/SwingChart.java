@@ -484,6 +484,12 @@ public class SwingChart extends PlainChart
     super.close();
   }
 
+	@Override
+	public void cancel()
+	{
+		// do nothing
+	}
+
 
 }
 

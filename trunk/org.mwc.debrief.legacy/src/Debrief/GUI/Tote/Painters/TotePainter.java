@@ -748,6 +748,12 @@ public class TotePainter implements StepperListener, CanvasType.PaintListener,
 	public final boolean isRepainting() {
 		return _inRepaint;
 	}
+	
+	@Override
+	public void cancel()
+	{
+		// do nothing
+	}
 
 	// ////////////////////////////////////////////////////////////////////////////////////////////////
 	// testing for this class

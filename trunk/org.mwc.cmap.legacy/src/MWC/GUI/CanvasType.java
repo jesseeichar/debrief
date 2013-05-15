@@ -476,6 +476,7 @@ public interface CanvasType {
      *
      */
     public String getName();
+		public void cancel();
   }
 
   /**

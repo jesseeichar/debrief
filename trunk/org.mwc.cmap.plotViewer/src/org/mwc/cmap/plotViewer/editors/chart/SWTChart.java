@@ -844,6 +844,13 @@ public abstract class SWTChart extends PlainChart implements ISelectionProvider
 
 		this._renderer.render(dest);
 	}
+	
+	@Override
+	public void cancel()
+	{
+		this._renderer.cancel();
+	}
+
 
 	@Override
 	public void removeSelectionChangedListener(ISelectionChangedListener listener)

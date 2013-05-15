@@ -1,15 +1,10 @@
 package org.mwc.cmap.gt2plot.data;
 
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,6 +17,7 @@ import java.util.Map;
 
 import javax.imageio.ImageIO;
 
+import org.eclipse.swt.widgets.Display;
 import org.geotools.data.ows.WMSCapabilities;
 import org.geotools.data.wms.WebMapServer;
 import org.geotools.data.wms.request.GetMapRequest;
@@ -97,7 +93,7 @@ public class WMSLayers implements Layer, BlockingLayer
 	}
 
 	@Override
-	public void paint(CanvasType dest)
+	public void paint(final CanvasType dest)
 	{
 		Map<String, org.geotools.data.ows.Layer> layers = new HashMap<String, org.geotools.data.ows.Layer>();
 		WMSCapabilities wmsCapabilities = getServer().getCapabilities();
@@ -123,10 +119,17 @@ public class WMSLayers implements Layer, BlockingLayer
 		String format = findBestFormat(wmsCapabilities);
 		getMapRequest.setFormat(format);
 		getMapRequest.setSRS("EPSG:4326");
-		BufferedImage image = readImage(getMapRequest);
+		final BufferedImage image = readImage(getMapRequest);
+
 		if (image != null)
 		{
-			dest.drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+			Display.getDefault().syncExec(new Runnable()
+			{
+				public void run()
+				{
+					dest.drawImage(image, 0, 0, image.getWidth(), image.getHeight(), null);
+				}
+			});
 		}
 		else
 		{
@@ -169,63 +172,14 @@ public class WMSLayers implements Layer, BlockingLayer
 	private BufferedImage readImage(GetMapRequest getMapRequest)
 	{
 		URL url = getMapRequest.getFinalURL();
-
-		InputStream inStream = null;
-		ByteArrayOutputStream out = null;
-		URLConnection conn = null;
 		try
 		{
-			conn = url.openConnection();
-			conn.connect();
-
-			inStream = conn.getInputStream();
-			boolean done = false;
-			byte[] buffer = new byte[8096];
-			out = new ByteArrayOutputStream();
-			while (!done && !Thread.interrupted())
-			{
-				int read = inStream.read(buffer);
-				done = read == -1 || read < buffer.length;
-				if (read > 0)
-				{
-					out.write(buffer, 0, read);
-				}
-			}
-			if (out.size() > 0)
-			{
-				ByteArrayInputStream imageDataIn = new ByteArrayInputStream(
-						out.toByteArray());
-				return ImageIO.read(imageDataIn);
-			}
+			return ImageIO.read(url);
 		}
 		catch (IOException e)
 		{
-			throw new RuntimeException(e);
+			return null;
 		}
-		finally
-		{
-			closeQuietly(inStream);
-			closeQuietly(out);
-			if (conn != null)
-			{
-				((HttpURLConnection) conn).disconnect();
-			}
-		}
-
-		return null;
-	}
-
-	private void closeQuietly(Closeable closeable)
-	{
-		try
-		{
-			closeable.close();
-		}
-		catch (Exception e)
-		{
-			System.err.println("Unable to close: " + closeable);
-		}
-
 	}
 
 	@Override

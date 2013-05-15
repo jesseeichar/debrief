@@ -86,6 +86,11 @@ public class PolygonEditorView extends ViewPart implements ISelectionProvider,
 				// ok - draw it.
 				paintPolygon(dest);
 			}
+			@Override
+			public void cancel()
+			{
+				// do nothing
+			}
 
 			public void resizedEvent(PlainProjection theProj, Dimension newScreenArea)
 			{

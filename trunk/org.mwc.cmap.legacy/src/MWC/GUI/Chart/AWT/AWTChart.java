@@ -199,17 +199,10 @@ import MWC.GUI.Canvas.AWT.AWTCanvas;
   public CanvasType getCanvas(){
     return _theCanvas;
   }
+	@Override
+	public void cancel()
+	{
+		// do nothing
+	}
 
 }
-
-
-
-
-
-
-
-
-
-
-
-

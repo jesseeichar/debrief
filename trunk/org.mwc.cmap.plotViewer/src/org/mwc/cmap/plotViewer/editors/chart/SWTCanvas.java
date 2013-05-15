@@ -157,6 +157,8 @@ public class SWTCanvas extends SWTCanvasAdapter
 
 	private org.eclipse.swt.widgets.Canvas _myCanvas = null;
 
+	private PaintUpdateCanvas _lastUpdater;
+
 	/**
 	 * an event queue - where we place screen update events, to trim down lots of
 	 * consecutive screen updates
@@ -241,8 +243,6 @@ public class SWTCanvas extends SWTCanvasAdapter
 		// setup our own painter
 		_myCanvas.addPaintListener(new org.eclipse.swt.events.PaintListener()
 		{
-			private PaintUpdateCanvas _lastUpdater;
-
 			public void paintControl(PaintEvent e)
 			{			// ok, create the new image
 				Point theSize = _myCanvas.getSize();
@@ -267,8 +267,8 @@ public class SWTCanvas extends SWTCanvasAdapter
 					bounds = _myCanvas.getBounds();
 				}
 				GC gc = new GC(_dblBuff);
-				this._lastUpdater = new PaintUpdateCanvas(SWTCanvas.this, getProjection(), gc, new Vector<PaintListener>(_thePainters), bounds);
-				this._lastUpdater.execute();
+				_lastUpdater = new PaintUpdateCanvas(SWTCanvas.this, getProjection(), gc, new Vector<PaintListener>(_thePainters), bounds);
+				_lastUpdater.execute();
 			}
 		});
 
@@ -656,6 +656,13 @@ public class SWTCanvas extends SWTCanvasAdapter
 			loc3 = CorePlugin.fromClipboard("12 01 02.225 S 14 12 32.116 E");
 			assertNotNull("is a location string", loc3);
 
+		}
+	}
+	
+	public void flush()
+	{
+		if (_dblBuff != null && !_dblBuff.isDisposed()) {
+			refreshFromDblBuffer(0, 0, _dblBuff.getBounds().width, _dblBuff.getBounds().height);
 		}
 	}
 }

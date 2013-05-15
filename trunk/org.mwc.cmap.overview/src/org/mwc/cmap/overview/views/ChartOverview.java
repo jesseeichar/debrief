@@ -122,6 +122,11 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 			public void resizedEvent(PlainProjection theProj, Dimension newScreenArea)
 			{
 			}
+
+			@Override
+			public void cancel()
+			{
+			}
 		});
 
 		makeActions();
@@ -584,6 +589,12 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 		public final void paintMe(final CanvasType dest)
 		{
 			_renderer.setTheLayers(_theLayers);
+		}
+		
+		@Override
+		public void cancel()
+		{
+			_renderer.cancel();
 		}
 
 		/**

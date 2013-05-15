@@ -19,9 +19,10 @@ import java.util.concurrent.Future;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
@@ -50,7 +51,8 @@ public class Renderer
 		private Renderer _renderer;
 		private boolean _forceUpdate;
 
-		public UpdateTimer(SWTCanvasAdapter canv, Renderer renderer, boolean forceUpdate)
+		public UpdateTimer(SWTCanvasAdapter canv, Renderer renderer,
+				boolean forceUpdate)
 		{
 			this._canvas = canv;
 			this._renderer = renderer;
@@ -62,7 +64,7 @@ public class Renderer
 		{
 			try
 			{
-				_renderer.draw(_canvas, _forceUpdate);
+				_renderer.paint(_canvas, _forceUpdate);
 			}
 			catch (InterruptedException e)
 			{
@@ -80,49 +82,12 @@ public class Renderer
 			}
 		}
 	}
-
-	/**
-	 * colour palette for our image
-	 * 
-	 */
-	private static final PaletteData PALETTE_DATA = new PaletteData(0xFF0000,
-			0xFF00, 0xFF);
-
-	/** RGB value to use as transparent color */
-	private static final int TRANSPARENT_COLOR = 0x123456;
-
 	/**
 	 * The time to wait between checking to see if a new layer has been rendered.
 	 */
 	private static final int CANVAS_UPDATE_INTERVAL_MILLIS = 200;
 
 	private static final int INITIAL_CANVAS_UPDATE_INTERVAL_MILLIS = 50;
-
-	public static ImageData awtToSwt(BufferedImage bufferedImage, int width,
-			int height)
-	{
-		System.err.println("DOING AWT TO SWT!!!!");
-		final int[] awtPixels = new int[width * height];
-		ImageData swtImageData = new ImageData(width, height, 24, PALETTE_DATA);
-		swtImageData.transparentPixel = TRANSPARENT_COLOR;
-		int step = swtImageData.depth / 8;
-		final byte[] data = swtImageData.data;
-		bufferedImage.getRGB(0, 0, width, height, awtPixels, 0, width);
-		for (int i = 0; i < height; i++)
-		{
-			int idx = (0 + i) * swtImageData.bytesPerLine + 0 * step;
-			for (int j = 0; j < width; j++)
-			{
-				int rgb = awtPixels[j + i * width];
-				for (int k = swtImageData.depth - 8; k >= 0; k -= 8)
-				{
-					data[idx++] = (byte) ((rgb >> k) & 0xFF);
-				}
-			}
-		}
-
-		return swtImageData;
-	}
 
 	/**
 	 * create the transparent image we need to for collating multiple layers into
@@ -161,7 +126,9 @@ public class Renderer
 
 	private LinkedHashMap<Layer, Future<Image>> _futures = new LinkedHashMap<Layer, Future<Image>>();
 
-	public void clearImages()
+	private WMSLayers _wmsLayer;
+
+	public synchronized void clearImages()
 	{
 
 		// tell the images to clear themselves out
@@ -205,7 +172,7 @@ public class Renderer
 	 * @param dest
 	 *          where we're painting to
 	 */
-	protected void paintBackground(final CanvasType dest)
+	private void paintBackground(final CanvasType dest)
 	{
 		// right, don't fill in the background if we're not painting to the
 		// screen
@@ -249,7 +216,7 @@ public class Renderer
 								dest.getBackgroundColor());
 						if (img != null)
 						{
-							ImageData swtImage = awtToSwt(img, width + 1, height + 1);
+							ImageData swtImage = SWTCanvasAdapter.awtToSwt(img, width + 1, height + 1);
 							_swtImage = new Image(Display.getCurrent(), swtImage);
 						}
 					}
@@ -302,21 +269,7 @@ public class Renderer
 		}
 	}
 
-	/**
-	 * Convenience method added, to allow child classes to override how we plot
-	 * non-background layers. This was originally inserted to let us support snail
-	 * trails
-	 * 
-	 * @param thisLayer
-	 * @param dest
-	 */
-	protected void paintThisLayer(final Layer thisLayer, CanvasType dest)
-	{
-		// draw into it
-		thisLayer.paint(dest);
-	}
-
-	public void removeImage(Layer changedLayer)
+	public synchronized void removeImage(Layer changedLayer)
 	{
 		// get the image
 		Image theImage = _renderedImageCache.get(changedLayer);
@@ -333,7 +286,7 @@ public class Renderer
 
 	}
 
-	public void render(CanvasType dest)
+	public synchronized void render(CanvasType dest)
 	{
 
 		if (!(dest instanceof SWTCanvasAdapter))
@@ -380,20 +333,21 @@ public class Renderer
 				int canvasWidth = getDrawWidthOfCanvas();
 				ImageData _myImageTemplate = null;
 
+				_wmsLayer = new WMSLayers();
 
-				WMSLayers wmsLayer = new WMSLayers();
 				try
 				{
-					wmsLayer.setCapabilities(new URL("http://129.206.228.72/cached/osm?Request=GetCapabilities"));
+					_wmsLayer.setCapabilities(new URL(
+							"http://129.206.228.72/cached/osm?Request=GetCapabilities"));
 				}
 				catch (MalformedURLException e)
 				{
 					e.printStackTrace();
 				}
-				wmsLayer.addLayerName("osm_auto:all");
+				_wmsLayer.addLayerName("osm_auto:all");
 				_myImageTemplate = renderLayer(dest, projection, canvasHeight,
-						canvasWidth, _myImageTemplate, wmsLayer );
-				
+						canvasWidth, _myImageTemplate, _wmsLayer);
+
 				// ok, pass through the layers, repainting any which need it
 				Enumeration<Layer> numer = _theLayers.sortedElements();
 				while (numer.hasMoreElements())
@@ -403,6 +357,8 @@ public class Renderer
 					_myImageTemplate = renderLayer(dest, projection, canvasHeight,
 							canvasWidth, _myImageTemplate, thisLayer);
 				}
+
+
 				Display.getCurrent().timerExec(INITIAL_CANVAS_UPDATE_INTERVAL_MILLIS,
 						new UpdateTimer((SWTCanvasAdapter) dest, this, true));
 			}
@@ -418,13 +374,12 @@ public class Renderer
 	 * @param thisLayer
 	 * @return
 	 */
-	protected ImageData renderLayer(CanvasType dest, PlainProjection projection,
-			int canvasHeight, int canvasWidth, ImageData _myImageTemplate,
-			final Layer thisLayer)
+	protected synchronized ImageData renderLayer(CanvasType dest,
+			PlainProjection projection, int canvasHeight, int canvasWidth,
+			ImageData _myImageTemplate, final Layer thisLayer)
 	{
 		// do our double-buffering bit do we have a layer for this object
-		org.eclipse.swt.graphics.Image image = _renderedImageCache
-				.get(thisLayer);
+		org.eclipse.swt.graphics.Image image = _renderedImageCache.get(thisLayer);
 		if (image == null)
 		{
 			// ok - do we have an image template?
@@ -458,9 +413,14 @@ public class Renderer
 		return _myImageTemplate;
 	}
 
-	void draw(SWTCanvasAdapter canv, boolean forceUpdate) throws InterruptedException,
-			ExecutionException
+	synchronized void paint(SWTCanvasAdapter canv, boolean forceUpdate)
+			throws InterruptedException, ExecutionException
 	{
+		if (canv.getProjection() == null)
+		{
+			// canvas has been disposed so we don't need to continue
+			return;
+		}
 		Set<Entry<Layer, Future<Image>>> entrySet = _futures.entrySet();
 
 		// first check if there is a new layer render for display
@@ -479,38 +439,16 @@ public class Renderer
 		{
 			// a new layer is ready so we will draw the map again
 			paintBackground(canv);
+			paintLayer(canv, _wmsLayer);
 			Enumeration<Layer> elements = _theLayers.sortedElements();
 			while (elements.hasMoreElements())
 			{
 				Layer layer = elements.nextElement();
 
-				Image image = _renderedImageCache.get(layer);
-
-				if (image != null)
-				{
-					// see if it is still rendering
-					Future<Image> future = _futures.get(layer);
-					if (future.isDone())
-					{
-						image = future.get();
-						_renderedImageCache.put(layer, image);
-						_futures.remove(layer);
-					}
-				}
-
-				if (image != null)
-				{
-					Rectangle bounds = image.getBounds();
-					canv.drawSWTImage(image, 0, 0, bounds.width, bounds.height, 255);
-//					ImageLoader loader = new ImageLoader();
-//					loader.data = new ImageData[]
-//					{ image.getImageData() };
-//					loader.save("E:\\Downloads\\debrief-" + layer.getName() + ".png",
-//							SWT.IMAGE_PNG);
-				}
+				paintLayer(canv, layer);
 			}
 
-			canv.updateMe();
+			canv.flush();
 		}
 
 		if (!_futures.isEmpty())
@@ -525,11 +463,48 @@ public class Renderer
 	}
 
 	/**
+	 * @param canv
+	 * @param layer
+	 * @throws InterruptedException
+	 * @throws ExecutionException
+	 */
+	protected void paintLayer(SWTCanvasAdapter canv, Layer layer)
+			throws InterruptedException, ExecutionException
+	{
+		Image image = _renderedImageCache.get(layer);
+
+		if (image == null)
+		{
+			// see if it is still rendering
+			Future<Image> future = _futures.get(layer);
+			if (future != null && future.isDone())
+			{
+				image = future.get();
+				_renderedImageCache.put(layer, image);
+				_futures.remove(layer);
+			}
+		}
+
+		if (image != null)
+		{
+			Rectangle bounds = image.getBounds();
+			canv.drawSWTImage(image, 0, 0, bounds.width, bounds.height, 255);
+//			ImageLoader loader = new ImageLoader();
+//
+//			loader.data = new ImageData[] {
+//					image.getImageData()
+//			};
+//
+//			loader.save("E:\\Downloads\\debrief-" + layer.getName() + ".png", SWT.IMAGE_PNG);
+		}
+	}
+
+	/**
 	 * Get the projection from the source canvas.
 	 * 
 	 * Template method, can be overridden.
 	 */
-	protected PlainProjection getCanvasProjection()
+	protected synchronized PlainProjection getCanvasProjection()
 	{
 		return _theCanvas.getProjection();
 	}
@@ -539,7 +514,7 @@ public class Renderer
 	 * 
 	 * Template method, can be overridden.
 	 */
-	protected int getDrawWidthOfCanvas()
+	protected synchronized int getDrawWidthOfCanvas()
 	{
 		return _theCanvas.getSize().width;
 	}
@@ -549,26 +524,34 @@ public class Renderer
 	 * 
 	 * Template method, can be overridden.
 	 */
-	protected int getDrawHeightOfCanvas()
+	protected synchronized int getDrawHeightOfCanvas()
 	{
 		return _theCanvas.getSize().height;
 	}
 
-	public void setTheCanvas(SWTCanvas _theCanvas)
+	public synchronized void setTheCanvas(SWTCanvas _theCanvas)
 	{
 		this._theCanvas = _theCanvas;
 	}
 
-	public void setTheLayers(Layers _theLayers)
+	public synchronized void setTheLayers(Layers _theLayers)
 	{
 		this._theLayers = _theLayers;
 	}
 
-	public void close()
+	public synchronized void close()
 	{
 		_executorService.shutdownNow();
 		clearImages();
 
+	}
+
+	public synchronized void cancel()
+	{
+		for (Future<?> future : _futures.values())
+		{
+			future.cancel(true);
+		}
 	}
 
 }

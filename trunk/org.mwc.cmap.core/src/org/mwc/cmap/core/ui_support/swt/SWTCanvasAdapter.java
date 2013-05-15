@@ -100,6 +100,7 @@ package org.mwc.cmap.core.ui_support.swt;
 import java.awt.BasicStroke;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -115,7 +116,6 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
-import org.eclipse.swt.widgets.Display;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.property_support.ColorHelper;
 import org.mwc.cmap.core.property_support.FontHelper;
@@ -140,6 +140,16 @@ public class SWTCanvasAdapter implements CanvasType, Serializable, Editable,
      * 
      */
 	private static final long serialVersionUID = 1L;
+
+	/**
+	 * colour palette for our image
+	 * 
+	 */
+	public static final PaletteData PALETTE_DATA = new PaletteData(0xFF0000,
+			0xFF00, 0xFF);
+
+	/** RGB value to use as transparent color */
+	public static final int TRANSPARENT_COLOR = 0x123456;
 
 	private static final float UNSET_LINE_WIDTH = -1;
 
@@ -505,48 +515,22 @@ public class SWTCanvasAdapter implements CanvasType, Serializable, Editable,
 			final int y0, final int width, final int height,
 			final ImageObserver observer)
 	{
-		if (_theDest == null)
+		if (_theDest == null || _theDest.isDisposed())
 			return true;
 
-		PaletteData palette = new PaletteData(0xFF, 0xFF00, 0xFF0000);
-		// PaletteData palette = new PaletteData(new RGB[]{new RGB(255,0,0), new
-		// RGB(0,255,0)});
-		ImageData imageData = new ImageData(48, 48, 24, palette);
+		ImageData imageData = awtToSwt((BufferedImage) img, width, height);
 
-		for (int x = 0; x < 48; x++)
+		Image image = new Image(_theDest.getDevice(), imageData);
+		try
 		{
-			for (int y = 0; y < 48; y++)
-			{
-				if (y > 11 && y < 35 && x > 11 && x < 35)
-				{
-					imageData.setPixel(x, y, SWTRasterPainter.toSWTColor(255, 0, 0)); // Set
-					// the
-					// center
-					// to
-					// red
-				}
-				else
-				{
-					imageData.setPixel(x, y, SWTRasterPainter.toSWTColor(0, 255, 0)); // Set
-					// the
-					// outside
-					// to
-					// green
-				}
-			}
+			_theDest.drawImage(image, 0, 0, image.getBounds().width,
+					image.getBounds().height, x0, y0, width, height);
 		}
-
-		Image image = new Image(Display.getCurrent(), imageData);
-
-		if (!_theDest.isDisposed())
-			_theDest.drawImage(image, 0, 0);
-
-		// return _theDest.drawImage(img, x, y, width, height, observer);
-
-		image.dispose();
-
+		finally
+		{
+			image.dispose();
+		}
 		return false;
-
 	}
 
 	public final boolean drawSWTImage(final Image img, final int x, final int y,
@@ -1292,6 +1276,37 @@ public class SWTCanvasAdapter implements CanvasType, Serializable, Editable,
 		if (_theDest != null)
 			if (!_theDest.isDisposed())
 				_theDest.drawImage(image, x, y);
+	}
+
+	public static ImageData awtToSwt(BufferedImage bufferedImage, int width,
+			int height)
+	{
+		System.err.println("DOING AWT TO SWT!!!!");
+		final int[] awtPixels = new int[width * height];
+		ImageData swtImageData = new ImageData(width, height, 24, PALETTE_DATA);
+		swtImageData.transparentPixel = TRANSPARENT_COLOR;
+		int step = swtImageData.depth / 8;
+		final byte[] data = swtImageData.data;
+		bufferedImage.getRGB(0, 0, width, height, awtPixels, 0, width);
+		for (int i = 0; i < height; i++)
+		{
+			int idx = (0 + i) * swtImageData.bytesPerLine + 0 * step;
+			for (int j = 0; j < width; j++)
+			{
+				int rgb = awtPixels[j + i * width];
+				for (int k = swtImageData.depth - 8; k >= 0; k -= 8)
+				{
+					data[idx++] = (byte) ((rgb >> k) & 0xFF);
+				}
+			}
+		}
+	
+		return swtImageData;
+	}
+
+	public void flush()
+	{
+		// nothing to do for this canvas
 	}
 
 }

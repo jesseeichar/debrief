@@ -57,10 +57,14 @@ public class PaintUpdateCanvas extends SWTCanvasAdapter
 	}
 
 	@Override
+	public void flush()
+	{
+		_parent.flush();
+	}
+	@Override
 	public void updateMe()
 	{
-		_parent.redraw(true, _drawBounds.x, _drawBounds.y, _drawBounds.width,
-				_drawBounds.height, true);
+		_parent.flush();
 	}
 
 	@Override
@@ -68,6 +72,12 @@ public class PaintUpdateCanvas extends SWTCanvasAdapter
 	{
 		if (_gc != null)
 		{
+			final Enumeration<PaintListener> enumer = _thePainters.elements();
+			while (enumer.hasMoreElements())
+			{
+				PaintListener thisPainter = enumer.nextElement();
+				thisPainter.cancel();
+			}
 			endDraw(_gc);
 			_gc.dispose();
 			_gc = null;
