@@ -102,8 +102,8 @@ package org.mwc.cmap.plotViewer.editors.chart;
 
 import java.awt.Dimension;
 import java.util.Enumeration;
+import java.util.Vector;
 
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -123,6 +123,7 @@ import org.eclipse.swt.events.PaintEvent;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -240,9 +241,34 @@ public class SWTCanvas extends SWTCanvasAdapter
 		// setup our own painter
 		_myCanvas.addPaintListener(new org.eclipse.swt.events.PaintListener()
 		{
+			private PaintUpdateCanvas _lastUpdater;
+
 			public void paintControl(PaintEvent e)
-			{
-				repaintMe(e);
+			{			// ok, create the new image
+				Point theSize = _myCanvas.getSize();
+
+				if(_lastUpdater != null) {
+					_lastUpdater.close();
+				}
+				if ((theSize.x == 0) || (theSize.y == 0))
+					return;
+
+				Rectangle bounds = new Rectangle(e.x, e.y, e.width, e.height);
+				// put double-buffering code in here.
+				if (_dblBuff == null)
+				{
+					_dblBuff = new Image(Display.getCurrent(), _myCanvas.getBounds().width,
+							_myCanvas.getBounds().height);
+					bounds = _myCanvas.getBounds();
+				} else if (_dblBuff.getBounds().width != _myCanvas.getBounds().width || _dblBuff.getBounds().height != _myCanvas.getBounds().height) {
+					_dblBuff.dispose();
+					_dblBuff = new Image(Display.getCurrent(), _myCanvas.getBounds().width,
+							_myCanvas.getBounds().height);
+					bounds = _myCanvas.getBounds();
+				}
+				GC gc = new GC(_dblBuff);
+				this._lastUpdater = new PaintUpdateCanvas(SWTCanvas.this, getProjection(), gc, new Vector<PaintListener>(_thePainters), bounds);
+				this._lastUpdater.execute();
 			}
 		});
 
@@ -330,50 +356,6 @@ public class SWTCanvas extends SWTCanvasAdapter
 	// screen redraw related
 	// ////////////////////////////////////////////////////
 
-	protected void repaintMe(PaintEvent pe)
-	{
-
-		// paintPlot(pe.gc);
-		// get the graphics destination
-		GC gc = pe.gc;
-
-		// put double-buffering code in here.
-		if (_dblBuff == null)
-		{
-			// ok, create the new image
-			Point theSize = _myCanvas.getSize();
-
-			if ((theSize.x == 0) || (theSize.y == 0))
-				return;
-
-			_dblBuff = new Image(Display.getCurrent(), theSize.x, theSize.y);
-			GC theDest = new GC(_dblBuff);
-
-			// prepare the ground (remember the graphics dest for a start)
-			startDraw(theDest);
-
-			// and paint into it
-			paintPlot(this);
-
-			// all finished, close it now
-			endDraw(null);
-
-			// and ditch the GC
-			theDest.dispose();
-
-		}
-
-		// finally put the required bits of the target image onto the screen
-		if (_dblBuff != null)
-			gc.drawImage(_dblBuff, pe.x, pe.y, pe.width, pe.height, pe.x, pe.y,
-					pe.width, pe.height);
-		else
-		{
-			CorePlugin.logError(Status.INFO,
-					"Double-buffering failed, no image produced", null);
-		}
-	}
-
 	/**
 	 * the real paint function, called when it's not satisfactory to just paint in
 	 * our safe double-buffered image.
@@ -382,23 +364,9 @@ public class SWTCanvas extends SWTCanvasAdapter
 	 */
 	public void paintPlot(CanvasType dest)
 	{
-		// go through our painters
-		final Enumeration<PaintListener> enumer = _thePainters.elements();
-		while (enumer.hasMoreElements())
-		{
-			final CanvasType.PaintListener thisPainter = (CanvasType.PaintListener) enumer
-					.nextElement();
-
-			// check the screen has been defined
-			final Dimension area = this.getProjection().getScreenArea();
-			if ((area == null) || (area.getWidth() <= 0) || (area.getHeight() <= 0))
-			{
-				return;
-			}
-
-			// it must be ok
-			thisPainter.paintMe(dest);
-		}
+		
+		Rectangle bounds = new Rectangle(0, 0, dest.getSize().width, dest.getSize().height);
+		new PaintUpdateCanvas((SWTCanvas) dest, getProjection(), null, _thePainters, bounds).paintPlot(dest);
 	}
 
 	// ///////////////////////////////////////////////////////////
@@ -460,7 +428,7 @@ public class SWTCanvas extends SWTCanvasAdapter
 			_dblBuff = null;
 		}
 
-		redraw();
+		redraw(false);
 
 	}
 
@@ -480,9 +448,23 @@ public class SWTCanvas extends SWTCanvasAdapter
 		return "SWT Canvas";
 	}
 
-	public void redraw(int x, int y, int width, int height, boolean b)
+	public void redraw(boolean refreshFromDblBuffer, int x, int y, int width, int height, boolean b)
 	{
+		if(refreshFromDblBuffer) 
+		{
+			refreshFromDblBuffer(x, y, width, height);
+		}
 		_myCanvas.redraw(x, y, width, height, b);
+	}
+
+	private void refreshFromDblBuffer(int x, int y, int width, int height)
+	{
+		if(_dblBuff != null && !_dblBuff.isDisposed())
+		{
+			GC gc = new GC(_myCanvas);
+			gc.drawImage(_dblBuff, x, y, width, height, x, y, width, height);
+			gc.dispose();
+		}
 	}
 
 	private long lastRun = 0;
@@ -492,11 +474,12 @@ public class SWTCanvas extends SWTCanvasAdapter
 	 * operation
 	 * 
 	 */
-	public void redraw()
+	public void redraw(boolean refreshFromDblBuffer)
 	{
 
 		final long TIME_INTERVAL = 150;
 		
+		Display thisD = Display.getCurrent() == null ? Display.getDefault() : Display.getDefault();
 		if (_deferPaints)
 		{
 
@@ -507,7 +490,6 @@ public class SWTCanvas extends SWTCanvasAdapter
 				lastRun = tNow;
 
 				// nope, fire it right away
-				Display thisD = Display.getDefault();
 				if (thisD != null)
 					thisD.syncExec(new Runnable()
 					{
@@ -543,7 +525,6 @@ public class SWTCanvas extends SWTCanvasAdapter
 		else
 		{
 			// nope, fire it right away
-			Display thisD = Display.getDefault();
 			if (thisD != null)
 				thisD.syncExec(new Runnable()
 				{

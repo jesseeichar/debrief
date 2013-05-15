@@ -4,13 +4,10 @@ import java.awt.*;
 import java.awt.Font;
 import java.awt.Point;
 import java.beans.*;
-import java.util.Enumeration;
 
 import org.eclipse.jface.action.*;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.*;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.*;
 import org.eclipse.swt.widgets.Composite;
@@ -572,6 +569,8 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 		public void setChartOverview(ChartOverview view)
 		{
 			_parentView = view;
+
+			_renderer.setTheCanvas(view._myOverviewChart.getSWTCanvas());
 		}
 
 		public void chartFireSelectionChanged(ISelection sel)
@@ -584,148 +583,7 @@ public class ChartOverview extends ViewPart implements PropertyChangeListener
 		 */
 		public final void paintMe(final CanvasType dest)
 		{
-
-			// just double-check we have some layers (if we're part of an overview
-			// chart, we may not have...)
-			if (_theLayers == null)
-				return;
-
-			// check that we have a valid canvas (that the sizes are set)
-			final java.awt.Dimension sArea = dest.getProjection().getScreenArea();
-			if (sArea != null)
-			{
-				if (sArea.width > 0)
-				{
-
-					// hey, we've plotted at least once, has the data area changed?
-					if (_lastDataArea != _parentView._myOverviewChart.getCanvas()
-							.getProjection().getDataArea())
-					{
-						// remember the data area for next time
-						_lastDataArea = _parentView._myOverviewChart.getCanvas()
-								.getProjection().getDataArea();
-
-						// clear out all of the layers we are using
-						_myLayers.clear();
-					}
-
-					int canvasHeight = _parentView._myOverviewChart.getCanvas().getSize()
-							.getSize().height;
-					int canvasWidth = _parentView._myOverviewChart.getCanvas().getSize().width;
-
-					paintBackground(dest);
-
-					// ok, pass through the layers, repainting any which need it
-					Enumeration<Layer> numer = _theLayers.sortedElements();
-					while (numer.hasMoreElements())
-					{
-						final Layer thisLayer = (Layer) numer.nextElement();
-
-						boolean isAlreadyPlotted = false;
-
-						// hmm, do we want to paint this layer?
-						if (_parentView.doWePaintThisLayer(thisLayer))
-						{
-
-							// just check if this layer is visible
-							if (thisLayer.getVisible())
-							{
-								// System.out.println("painting:" + thisLayer.getName());
-
-								if (doubleBufferPlot())
-								{
-									// check we're plotting to a SwingCanvas, because we don't
-									// double-buffer anything else
-									if (dest instanceof SWTCanvas)
-									{
-										// does this layer want to be double-buffered?
-										if (thisLayer instanceof BaseLayer)
-										{
-											// just check if there is a property which over-rides the
-											// double-buffering
-											final BaseLayer bl = (BaseLayer) thisLayer;
-											if (bl.isBuffered())
-											{
-												isAlreadyPlotted = true;
-
-												// do our double-buffering bit
-												// do we have a layer for this object
-												org.eclipse.swt.graphics.Image image = (org.eclipse.swt.graphics.Image) _myLayers
-														.get(thisLayer);
-												if (image == null)
-												{
-													// ok - create our image
-													if (_myImageTemplate == null)
-													{
-
-														Image tmpTemplate = new Image(Display.getCurrent(),
-																canvasWidth, canvasHeight);
-														_myImageTemplate = tmpTemplate.getImageData();
-
-														tmpTemplate.dispose();
-														tmpTemplate = null;
-													}
-													image = createSWTImage(_myImageTemplate);
-
-													GC newGC = new GC(image);
-
-													// wrap the GC into something we know how to plot to.
-													SWTCanvasAdapter ca = new OverviewSWTCanvasAdapter(
-															dest.getProjection());
-
-													ca.setScreenSize(dest.getProjection().getScreenArea());
-
-													// and store the GC
-													ca.startDraw(newGC);
-
-													// ok, paint the layer into this canvas
-													thisLayer.paint(ca);
-
-													// done.
-													ca.endDraw(null);
-
-													// store this image in our list, indexed by the layer
-													// object itself
-													_myLayers.put(thisLayer, image);
-
-													// and ditch the GC
-													newGC.dispose();
-												}
-
-												// have we ended up with an image to paint?
-												if (image != null)
-												{
-													// get the graphics to paint to
-													SWTCanvas canv = (SWTCanvas) dest;
-
-													// lastly add this image to our Graphics object
-													canv.drawSWTImage(image, 0, 0, canvasWidth,
-															canvasHeight, 255);
-
-													// but, we also have to ditch the image
-													// image.dispose();
-												}
-
-											}
-										}
-									} // whether we were plotting to a SwingCanvas (which may be
-									// double-buffered
-								} // whther we are happy to do double-buffering
-
-								// did we manage to paint it
-								if (!isAlreadyPlotted)
-								{
-									paintThisLayer(thisLayer, dest);
-
-									isAlreadyPlotted = true;
-								}
-							}
-						}
-					}
-
-				}
-			}
-
+			_renderer.setTheLayers(_theLayers);
 		}
 
 		/**

@@ -217,7 +217,7 @@ public class BaseLayer extends Plottables implements Layer, SupportsPropertyList
 	
 	public void append(Layer other)
 	{
-		if (other instanceof BaseLayer)
+		if (other instanceof BaseLayer && !(other instanceof BlockingLayer) || this instanceof BlockingLayer)
 		{
 			BaseLayer bl = (BaseLayer) other;
 			super.append(bl);
