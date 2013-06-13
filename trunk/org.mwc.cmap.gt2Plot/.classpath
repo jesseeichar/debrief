@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="libs/gt-image.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-image.jar" sourcepath="libs-sources/gt-image-sources.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="src" path="src"/>
@@ -8,18 +8,18 @@
 	<classpathentry exported="true" kind="lib" path="libs/commons-httpclient.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/commons-logging.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/commons-pool.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-api.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-coverage.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-api.jar" sourcepath="libs-sources/gt-api-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-coverage.jar" sourcepath="libs-sources/gt-coverage-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-cql.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-data.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-epsg-hsql.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-geojson.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-geotiff.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-geotiff.jar" sourcepath="libs-sources/gt-geotiff-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-main.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-metadata.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-opengis.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-referencing.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-render.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-referencing.jar" sourcepath="libs-sources/gt-referencing-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-render.jar" sourcepath="libs-sources/gt-render-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-shapefile.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-swing.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-swt.jar"/>

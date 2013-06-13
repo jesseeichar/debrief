@@ -3,8 +3,7 @@ package org.mwc.cmap.plotViewer.editors.chart;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.File;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -19,17 +18,14 @@ import java.util.concurrent.Future;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.ImageLoader;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.preferences.ChartPrefsPage.PreferenceConstants;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
-import org.mwc.cmap.gt2plot.data.WMSLayers;
 import org.mwc.cmap.gt2plot.proj.GeoToolsPainter;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
 
@@ -126,7 +122,7 @@ public class Renderer
 
 	private LinkedHashMap<Layer, Future<Image>> _futures = new LinkedHashMap<Layer, Future<Image>>();
 
-	private WMSLayers _wmsLayer;
+	private org.mwc.cmap.gt2plot.data.GridCoverageLayer _gcLayer;
 
 	public synchronized void clearImages()
 	{
@@ -333,20 +329,12 @@ public class Renderer
 				int canvasWidth = getDrawWidthOfCanvas();
 				ImageData _myImageTemplate = null;
 
-				_wmsLayer = new WMSLayers();
+				_gcLayer = new org.mwc.cmap.gt2plot.data.GridCoverageLayer();
+				_gcLayer.setImageFile(new File("E:\\GeographicData\\uDigData\\wsiearth.tif"));
+				_gcLayer.setVisible(true);
 
-				try
-				{
-					_wmsLayer.setCapabilities(new URL(
-							"http://129.206.228.72/cached/osm?Request=GetCapabilities"));
-				}
-				catch (MalformedURLException e)
-				{
-					e.printStackTrace();
-				}
-				_wmsLayer.addLayerName("osm_auto:all");
 				_myImageTemplate = renderLayer(dest, projection, canvasHeight,
-						canvasWidth, _myImageTemplate, _wmsLayer);
+						canvasWidth, _myImageTemplate, _gcLayer);
 
 				// ok, pass through the layers, repainting any which need it
 				Enumeration<Layer> numer = _theLayers.sortedElements();
@@ -439,7 +427,7 @@ public class Renderer
 		{
 			// a new layer is ready so we will draw the map again
 			paintBackground(canv);
-			paintLayer(canv, _wmsLayer);
+			paintLayer(canv, _gcLayer);
 			Enumeration<Layer> elements = _theLayers.sortedElements();
 			while (elements.hasMoreElements())
 			{

@@ -105,6 +105,19 @@
 							<outputDirectory>${project.basedir}/libs</outputDirectory>
 						</configuration>
 					</execution>
+					<execution>
+						<id>copy-geotools-dependency-sources</id>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<phase>initialize</phase>
+						<configuration>
+							<failOnMissingClassifierArtifact>false</failOnMissingClassifierArtifact>
+							<stripVersion>true</stripVersion>
+							<outputDirectory>${project.basedir}/libs-sources</outputDirectory>
+							<classifier>sources</classifier>
+						</configuration>
+					</execution>
 				</executions>
 			</plugin>
 

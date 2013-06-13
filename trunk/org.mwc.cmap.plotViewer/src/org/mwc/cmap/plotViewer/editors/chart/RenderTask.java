@@ -47,33 +47,41 @@ public class RenderTask implements Callable<Image>
 		// just check if this layer is visible
 		if (_layer.getVisible())
 		{
-			// ok, and now the SWT image
-			Image image = Renderer.createSWTImage(_myImageTemplate);
+			try
+			{
+				// ok, and now the SWT image
+				Image image = Renderer.createSWTImage(_myImageTemplate);
 
-			// we need to wrap it into a GC so we can write to it.
-			GC newGC = new GC(image);
+				// we need to wrap it into a GC so we can write to it.
+				GC newGC = new GC(image);
 
-			// in Windows 7 & OSX we've had problem where
-			// anti-aliased text bleeds through assigned
-			// transparent shade. This makes the text look really
-			// blurry. So, turn off anti-aliasd text
-			newGC.setTextAntialias(SWT.OFF);
+				// in Windows 7 & OSX we've had problem where
+				// anti-aliased text bleeds through assigned
+				// transparent shade. This makes the text look really
+				// blurry. So, turn off anti-aliasd text
+				newGC.setTextAntialias(SWT.OFF);
 
-			// wrap the GC into something we know how to plot to.
-			SWTCanvasAdapter ca = new SWTCanvasAdapter(_destCanvas.getProjection());
-			ca.setScreenSize(_projection.getScreenArea());
+				// wrap the GC into something we know how to plot to.
+				SWTCanvasAdapter ca = new SWTCanvasAdapter(_destCanvas.getProjection());
+				ca.setScreenSize(_projection.getScreenArea());
 
-			// and store the GC
-			ca.startDraw(newGC);
-			_layer.paint(ca);
+				// and store the GC
+				ca.startDraw(newGC);
+				_layer.paint(ca);
 
-			// done.
-			ca.endDraw(null);
+				// done.
+				ca.endDraw(null);
 
-			// and ditch the GC
-			newGC.dispose();
+				// and ditch the GC
+				newGC.dispose();
 
-			return image;
+				return image;
+			}
+			catch (Throwable e)
+			{
+				e.printStackTrace();
+				return null;
+			}
 		}
 		else
 		{
