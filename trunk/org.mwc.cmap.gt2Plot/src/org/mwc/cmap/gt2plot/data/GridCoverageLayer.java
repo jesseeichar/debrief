@@ -4,26 +4,28 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.Enumeration;
-import java.util.List;
 
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
 import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridFormatFinder;
+import org.geotools.coverage.grid.io.UnknownFormat;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.renderer.lite.gridcoverage2d.GridCoverageRenderer;
 import org.geotools.styling.RasterSymbolizer;
-import org.geotools.styling.SLD;
 import org.geotools.styling.StyleBuilder;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
-import org.opengis.parameter.GeneralParameterDescriptor;
 import org.opengis.parameter.GeneralParameterValue;
-import org.opengis.parameter.ParameterValueGroup;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import MWC.GUI.BlockingLayer;
@@ -42,15 +44,17 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 	private volatile boolean _visible = true;
 	private volatile String _name;
 
-	private Object _sourceObject;
+	private Serializable _sourceObject;
 	private RasterSymbolizer _symbolizer;
+	private Reference<GridCoverage2D> _coverageCache;
 
 	public GridCoverageLayer()
 	{
 		StyleBuilder styleBuilder = new StyleBuilder();
 		_symbolizer = styleBuilder.createRasterSymbolizer();
-		_symbolizer.setOpacity(styleBuilder.literalExpression(1.0));
+		_symbolizer.setOpacity(styleBuilder.literalExpression(0.5));
 	}
+
 	@Override
 	public void append(Layer other)
 	{
@@ -64,18 +68,20 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 		WorldArea visibleArea = prj.getVisibleDataArea();
 		Dimension screenArea = prj.getScreenArea();
 		CoordinateReferenceSystem destinationCRS = DefaultGeographicCRS.WGS84;
-		Envelope envelope = JtsAdapter.toEnvelope(visibleArea);
-		
+		ReferencedEnvelope envelope = JtsAdapter.toEnvelope(visibleArea);
+
 		Rectangle screenSize = new Rectangle(screenArea);
 
 		Graphics2D g2d = null;
 		try
 		{
-			AffineTransform worldToScreen = RendererUtilities.worldToScreenTransform(envelope, screenSize, destinationCRS);
+			AffineTransform worldToScreen;
+			worldToScreen = RendererUtilities.worldToScreenTransform(
+					envelope, screenSize);
 			GridCoverageRenderer gcr = new GridCoverageRenderer(destinationCRS,
 					envelope, screenSize, worldToScreen);
-			BufferedImage image = new BufferedImage(screenArea.width, screenArea.height,
-					BufferedImage.TYPE_4BYTE_ABGR);
+			BufferedImage image = new BufferedImage(screenArea.width,
+					screenArea.height, BufferedImage.TYPE_4BYTE_ABGR);
 			g2d = image.createGraphics();
 			GridCoverage2D coverage = read(_sourceObject);
 			gcr.paint(g2d, coverage, _symbolizer);
@@ -94,12 +100,18 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 		}
 	}
 
-	private GridCoverage2D read(Object _sourceObject2)
+	private synchronized GridCoverage2D read(Object _sourceObject2)
 			throws IllegalArgumentException, IOException
 	{
-		AbstractGridFormat format = GridFormatFinder.findFormat(_sourceObject);
-		AbstractGridCoverage2DReader reader = format.getReader(_sourceObject2);
-		return reader.read(new GeneralParameterValue[0]);
+		if (_coverageCache == null || _coverageCache.get() == null)
+		{
+			AbstractGridFormat format = GridFormatFinder.findFormat(_sourceObject);
+			AbstractGridCoverage2DReader reader = format.getReader(_sourceObject2);
+			_coverageCache = new SoftReference<GridCoverage2D>(
+					reader.read(new GeneralParameterValue[0]));
+		}
+
+		return _coverageCache.get();
 	}
 
 	@Override
@@ -193,25 +205,33 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 	{
 		_visible = val;
 	}
-	public synchronized void setImageFile(File file) {
 
-		AbstractGridFormat format = GridFormatFinder.findFormat(file);
-		if (format == null) {
-			throw new IllegalArgumentException(file+" is not a recognized GridCoverage file");
+	public synchronized void setImageFile(File file)
+	{
+		if (!file.exists()) {
+			throw new IllegalArgumentException(file
+					+ " does not exist");
 		}
+		AbstractGridFormat format = GridFormatFinder.findFormat(file);
+		if (format == null || format instanceof UnknownFormat)
+		{
+			throw new IllegalArgumentException(file
+					+ " is not a recognized GridCoverage file");
+		}
+		// JESSETODO assign format to field to not have to load again.
 		this._sourceObject = file;
 	}
-	
-	public synchronized Object getSourceObject()
+
+	public synchronized Serializable getSourceObject()
 	{
 		return _sourceObject;
 	}
-	
+
 	public synchronized void setSymbolizer(RasterSymbolizer symbolizer)
 	{
 		this._symbolizer = symbolizer;
 	}
-	
+
 	public synchronized RasterSymbolizer getSymbolizer()
 	{
 		return _symbolizer;

@@ -11,11 +11,11 @@
 	<classpathentry exported="true" kind="lib" path="libs/gt-api.jar" sourcepath="libs-sources/gt-api-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-coverage.jar" sourcepath="libs-sources/gt-coverage-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-cql.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-data.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-data.jar" sourcepath="libs-sources/gt-data-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-epsg-hsql.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-geojson.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-geotiff.jar" sourcepath="libs-sources/gt-geotiff-sources.jar"/>
-	<classpathentry exported="true" kind="lib" path="libs/gt-main.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-main.jar" sourcepath="libs-sources/gt-main-sources.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-metadata.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-opengis.jar"/>
 	<classpathentry exported="true" kind="lib" path="libs/gt-referencing.jar" sourcepath="libs-sources/gt-referencing-sources.jar"/>

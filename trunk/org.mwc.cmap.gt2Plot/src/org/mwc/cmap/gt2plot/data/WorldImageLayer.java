@@ -40,6 +40,9 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.MultiPolygon;
 
+/**
+ * @deprecated
+ */
 public class WorldImageLayer extends GeoToolsLayer
 {
 	public final static String RASTER_FILE = "rasterExtents_ARCS_Export";

@@ -10,6 +10,9 @@ import org.mwc.cmap.core.CorePlugin;
 
 import MWC.GUI.ExternallyManagedDataLayer;
 
+/**
+ * @deprecated
+ */
 public abstract class GeoToolsLayer extends ExternallyManagedDataLayer
 {
 	/**

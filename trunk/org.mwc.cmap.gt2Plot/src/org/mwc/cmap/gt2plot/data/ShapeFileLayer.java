@@ -17,6 +17,9 @@ import org.mwc.cmap.core.CorePlugin;
 import MWC.GUI.ExternallyManagedDataLayer;
 import MWC.GUI.Shapes.ChartBoundsWrapper;
 
+/**
+ * @deprecated
+ */
 public class ShapeFileLayer extends GeoToolsLayer
 {
 	/**
