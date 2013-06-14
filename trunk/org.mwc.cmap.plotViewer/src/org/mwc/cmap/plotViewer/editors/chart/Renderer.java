@@ -26,6 +26,7 @@ import org.eclipse.swt.widgets.Display;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.preferences.ChartPrefsPage.PreferenceConstants;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
+import org.mwc.cmap.gt2plot.data.GridCoverageLayer;
 import org.mwc.cmap.gt2plot.proj.GeoToolsPainter;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
 
@@ -122,7 +123,7 @@ public class Renderer
 
 	private LinkedHashMap<Layer, Future<Image>> _futures = new LinkedHashMap<Layer, Future<Image>>();
 
-	private org.mwc.cmap.gt2plot.data.GridCoverageLayer _gcLayer;
+	private Map<String, GridCoverageLayer> _gcLayers = new HashMap<String, GridCoverageLayer>();
 
 	public synchronized void clearImages()
 	{
@@ -329,12 +330,10 @@ public class Renderer
 				int canvasWidth = getDrawWidthOfCanvas();
 				ImageData _myImageTemplate = null;
 
-				_gcLayer = new org.mwc.cmap.gt2plot.data.GridCoverageLayer();
-				_gcLayer.setImageFile(new File("E:\\GeographicData\\uDigData\\wsiearth.tif"));
-				_gcLayer.setVisible(true);
-
-				_myImageTemplate = renderLayer(dest, projection, canvasHeight,
-						canvasWidth, _myImageTemplate, _gcLayer);
+				_myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
+						canvasWidth, _myImageTemplate, "wsiearth.tif");
+				_myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
+						canvasWidth, _myImageTemplate, "clds.tif");
 
 				// ok, pass through the layers, repainting any which need it
 				Enumeration<Layer> numer = _theLayers.sortedElements();
@@ -351,6 +350,35 @@ public class Renderer
 						new UpdateTimer((SWTCanvasAdapter) dest, this, true));
 			}
 		}
+	}
+
+	/**
+	 * @param dest
+	 * @param projection
+	 * @param canvasHeight
+	 * @param canvasWidth
+	 * @param _myImageTemplate
+	 * @param fileName 
+	 * @return
+	 */
+	protected ImageData addHardcodedImage(CanvasType dest,
+			PlainProjection projection, int canvasHeight, int canvasWidth,
+			ImageData _myImageTemplate, String fileName)
+	{
+		GridCoverageLayer layer;
+		if (!_gcLayers.containsKey(fileName)) {
+			layer = new org.mwc.cmap.gt2plot.data.GridCoverageLayer();
+			layer.setImageFile(new File(fileName));
+			layer.setVisible(true);
+
+			_gcLayers.put(fileName, layer);
+		} else {
+			layer = _gcLayers.get(fileName);
+		}
+
+		_myImageTemplate = renderLayer(dest, projection, canvasHeight,
+				canvasWidth, _myImageTemplate, layer);
+		return _myImageTemplate;
 	}
 
 	/**
@@ -406,6 +434,7 @@ public class Renderer
 	{
 		if (canv.getProjection() == null)
 		{
+			_futures.clear();
 			// canvas has been disposed so we don't need to continue
 			return;
 		}
@@ -427,7 +456,11 @@ public class Renderer
 		{
 			// a new layer is ready so we will draw the map again
 			paintBackground(canv);
-			paintLayer(canv, _gcLayer);
+			for (GridCoverageLayer layer : _gcLayers.values())
+			{
+				paintLayer(canv, layer);
+			}
+
 			Enumeration<Layer> elements = _theLayers.sortedElements();
 			while (elements.hasMoreElements())
 			{

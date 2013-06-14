@@ -81,3 +81,7 @@ trunk/org.mwc.debrief.GNDManager/javaCompiler...args
 trunk/org.mwc.debrief.GNDManager/build.xml
 trunk/org.mwc.asset.help/temp.folder
 trunk/org.mwc.asset.help/javaCompiler.help_content.jar.args
+
+
+eclipse/
+gt-eclipse/
