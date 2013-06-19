@@ -159,6 +159,7 @@ import org.mwc.cmap.core.property_support.RightClickSupport;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
 import org.mwc.cmap.plotViewer.actions.Pan;
 import org.mwc.cmap.plotViewer.actions.ZoomIn;
+import org.mwc.cmap.plotViewer.editors.render.Renderer;
 
 import MWC.GUI.CanvasType;
 import MWC.GUI.Editable;

@@ -1,4 +1,4 @@
-package org.mwc.cmap.plotViewer.editors.chart;
+package org.mwc.cmap.plotViewer.editors.render;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -20,15 +20,22 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
+import org.geotools.referencing.CRS;
+import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.preferences.ChartPrefsPage.PreferenceConstants;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
 import org.mwc.cmap.gt2plot.data.GridCoverageLayer;
 import org.mwc.cmap.gt2plot.proj.GeoToolsPainter;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
+import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
+
+import com.vividsolutions.jts.geom.Coordinate;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.BlockingLayer;
@@ -114,6 +121,8 @@ public class Renderer
 
 	protected WorldArea _lastDataArea;
 
+	private TileCache _tileCache;
+	
 	/**
 	 * our list of layered images.
 	 */
@@ -290,6 +299,7 @@ public class Renderer
 		{
 			throw new IllegalArgumentException(dest + " is not an SWTCanvas");
 		}
+		
 		// just double-check we have some layers (if we're part of an overview
 		// chart, we may not have...)
 		if (_theLayers == null)
@@ -308,6 +318,9 @@ public class Renderer
 			if (sArea.width > 0)
 			{
 
+				
+				initTileCache((SWTCanvas) dest);
+				
 				// hey, we've plotted at least once, has the data area
 				// changed?
 				PlainProjection projection = getCanvasProjection();
@@ -349,6 +362,17 @@ public class Renderer
 				Display.getCurrent().timerExec(INITIAL_CANVAS_UPDATE_INTERVAL_MILLIS,
 						new UpdateTimer((SWTCanvasAdapter) dest, this, true));
 			}
+		}
+	}
+
+	private void initTileCache(SWTCanvas dest)
+	{
+		// TODO check for CRS change
+		if (_tileCache == null) {
+			Point dpi = dest.getCanvas().getDisplay().getDPI();
+			double averageDpi = dpi.x + dpi.y / 2;
+			CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
+			_tileCache = new TileCache(new Dimension(512,512), TileCache.DEFAULT_WGS84, new Coordinate (-180,-90), averageDpi, crs);
 		}
 	}
 

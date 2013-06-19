@@ -887,5 +887,6 @@ Export-Package:
  vrml.field;uses:="vrml,com.sun.j3d.loaders.vrml97.impl",
  vrml.node;uses:="vrml,com.sun.j3d.loaders.vrml97.impl"
 Require-Bundle: org.junit;visibility:=reexport,
- org.eclipse.swt;bundle-version="3.100.1"
+ org.eclipse.swt;bundle-version="3.100.1",
+ org.mwc.cmap.gt2Lib;bundle-version="1.0.5"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

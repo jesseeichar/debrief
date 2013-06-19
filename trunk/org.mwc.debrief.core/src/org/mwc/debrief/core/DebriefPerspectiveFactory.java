@@ -33,8 +33,8 @@ public class DebriefPerspectiveFactory implements IPerspectiveFactory
 		IFolderLayout midLeft = layout.createFolder("midLeft", IPageLayout.BOTTOM, 0.3f,
 				"topLeft");
 		midLeft.addView(CorePlugin.TOTE);
-		midLeft.addPlaceholder(CorePlugin.STACKED_DOTS);
-		midLeft.addPlaceholder(CorePlugin.FREQ_RESIDUALS);
+//		midLeft.addPlaceholder(CorePlugin.STACKED_DOTS);
+//		midLeft.addPlaceholder(CorePlugin.FREQ_RESIDUALS);
 		midLeft.addView(CorePlugin.OVERVIEW_PLOT);
 		midLeft.addPlaceholder(CorePlugin.POLYGON_EDITOR);		
 		
@@ -85,7 +85,9 @@ public class DebriefPerspectiveFactory implements IPerspectiveFactory
 		
 		// ok - make sure the debrief action sets are visible
 		layout.addActionSet("org.mwc.debrief.core");
-		layout.addActionSet("org.mwc.debrief.track_shift");
+		// JE: Trying to get rid of exceptions in console so that I can find my exception easier
+		// remove co
+//		layout.addActionSet("org.mwc.debrief.track_shift");
 	}
 
 	

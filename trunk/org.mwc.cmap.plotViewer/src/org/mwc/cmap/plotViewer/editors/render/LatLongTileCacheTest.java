@@ -3,7 +3,9 @@ package org.mwc.cmap.plotViewer.editors.render;
 import static org.junit.Assert.*;
 
 import java.awt.Dimension;
+import java.util.List;
 
+import org.eclipse.swt.widgets.Display;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.geotools.renderer.lite.RendererUtilities;
@@ -26,7 +28,7 @@ public class LatLongTileCacheTest
 	{
 		_tileCache = new TileCache(new Dimension(512, 512),
 				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), 90,
-				DefaultGeographicCRS.WGS84);
+				DefaultGeographicCRS.WGS84, new TestTileLoader());
 	}
 
 	@Test
@@ -54,59 +56,66 @@ public class LatLongTileCacheTest
 
 		assertEquals(TileCache.DEFAULT_WGS84[0], scale, 0.0000001);
 	}
-	
+
 	@Test
 	public void testGetClosestScale()
 	{
-		double scale = _tileCache.getClosestScale(new Envelope(4.949, 5.4755, 46.5204, 46.7463),
-				new Dimension(1500, 650));
-		
-		assertEquals(100000,
-				scale, 0.0000001);
+		double scale = _tileCache.getClosestScale(new Envelope(4.949, 5.4755,
+				46.5204, 46.7463), new Dimension(1500, 650));
+
+		assertEquals(100000, scale, 0.0000001);
 	}
 
 	@Test
-	public void testCalculateBoundsCenteredSmallScale() throws MismatchedDimensionException, TransformException, FactoryException {
-		Dimension dimension = new Dimension(1500, 650);
-		int desiredScale = 1000;
-		Coordinate center = new Coordinate(0,0);
-		Envelope bounds = _tileCache.calculateBounds(dimension, desiredScale, center);
-		double scale = RendererUtilities.calculateScale(new ReferencedEnvelope(bounds, DefaultGeographicCRS.WGS84), dimension.width,
-				dimension.height, 90);
-		assertEquals(desiredScale, scale, 1);
+	public void testGetTiles() {
+		Tile[][] tiles = _tileCache.getTiles(new Dimension(1000, 1000), 100000, new Coordinate(0,0));
+		
+		fail("not implemented");
 	}
-	
+
 	@Test
-	public void testCalculateBoundsCloseToPoleLargeScale() throws MismatchedDimensionException, TransformException, FactoryException {
-		Dimension dimension = new Dimension(1500, 650);
-		int desiredScale = 50000000;
-		Coordinate center = new Coordinate(0,89.99999);
-		Envelope bounds = _tileCache.calculateBounds(dimension, desiredScale, center);
-		double scale = RendererUtilities.calculateScale(new ReferencedEnvelope(bounds, DefaultGeographicCRS.WGS84), dimension.width,
-				dimension.height, 90);
-		assertEquals(desiredScale, scale, 1);
+	public void testCalculateBoundsCenteredSmallScale()
+			throws MismatchedDimensionException, TransformException, FactoryException
+	{
+		asserCorrectCalculateBounds(new Dimension(1500, 650), 1000, new Coordinate(
+				0, 0));
 	}
-	
-	
+
 	@Test
-	public void testCalculateBoundsCloseToDatelineLargeScale() throws MismatchedDimensionException, TransformException, FactoryException {
-		Dimension dimension = new Dimension(1500, 650);
-		int desiredScale = 50000000;
-		Coordinate center = new Coordinate(-180,0);
-		Envelope bounds = _tileCache.calculateBounds(dimension, desiredScale, center);
-		double scale = RendererUtilities.calculateScale(new ReferencedEnvelope(bounds, DefaultGeographicCRS.WGS84), dimension.width,
-				dimension.height, 90);
-		assertEquals(desiredScale, scale, 1);
+	public void testCalculateBoundsCloseToPoleLargeScale()
+			throws MismatchedDimensionException, TransformException, FactoryException
+	{
+		asserCorrectCalculateBounds(new Dimension(1500, 650), 50000000,
+				new Coordinate(0, 89.99999));
 	}
-	
+
 	@Test
-	public void testCalculateBoundsCenteredLargeScale() throws MismatchedDimensionException, TransformException, FactoryException {
-		Dimension dimension = new Dimension(1500, 650);
-		int desiredScale = 50000000;
-		Coordinate center = new Coordinate(0,0);
-		Envelope bounds = _tileCache.calculateBounds(dimension, desiredScale, center);
-		double scale = RendererUtilities.calculateScale(new ReferencedEnvelope(bounds, DefaultGeographicCRS.WGS84), dimension.width,
-				dimension.height, 90);
+	public void testCalculateBoundsCloseToDatelineLargeScale()
+			throws MismatchedDimensionException, TransformException, FactoryException
+	{
+		asserCorrectCalculateBounds(new Dimension(1500, 650), 50000000,
+				new Coordinate(-180, 0));
+	}
+
+	@Test
+	public void testCalculateBoundsCenteredLargeScale()
+			throws MismatchedDimensionException, TransformException, FactoryException
+	{
+		asserCorrectCalculateBounds(new Dimension(1500, 650), 50000000,
+				new Coordinate(0, 0));
+	}
+
+	/**
+	 * Check that calculate bounds give expected value
+	 */
+	protected void asserCorrectCalculateBounds(Dimension dimension,
+			int desiredScale, Coordinate center) throws TransformException,
+			FactoryException
+	{
+		Envelope bounds = _tileCache.calculateBounds(dimension, desiredScale,
+				center);
+		double scale = _tileCache.calculateScale(bounds, dimension);
 		assertEquals(desiredScale, scale, 1);
 	}
+
 }
