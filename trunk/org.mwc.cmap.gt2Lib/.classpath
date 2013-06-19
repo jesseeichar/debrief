@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="lib" path="libs/gt-image.jar" sourcepath="libs-sources/gt-image-sources.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
+	<classpathentry exported="true" kind="lib" path="libs/commons-codec.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/commons-httpclient.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/commons-logging.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/commons-pool.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-api.jar" sourcepath="libs-sources/gt-api-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-coverage.jar" sourcepath="libs-sources/gt-coverage-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-cql.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-data.jar" sourcepath="libs-sources/gt-data-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-epsg-hsql.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-geojson.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-geotiff.jar" sourcepath="libs-sources/gt-geotiff-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-main.jar" sourcepath="libs-sources/gt-main-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-metadata.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-opengis.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-referencing.jar" sourcepath="libs-sources/gt-referencing-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-render.jar" sourcepath="libs-sources/gt-render-sources.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-shapefile.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-swing.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-swt.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-wms.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/gt-xml.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/hsqldb.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/imageio-ext-tiff.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/imageio-ext-utilities.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jai_codec.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jai_core.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jai_imageio.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jdom.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jgridshift.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/json-simple.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jsr-275.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jt-utils.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jt-zonalstats.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/jts.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/miglayout-swing.jar"/>
+	<classpathentry exported="true" kind="lib" path="libs/vecmath.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
