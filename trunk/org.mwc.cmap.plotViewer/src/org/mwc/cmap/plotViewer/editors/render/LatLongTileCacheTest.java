@@ -1,14 +1,11 @@
 package org.mwc.cmap.plotViewer.editors.render;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.awt.Dimension;
-import java.util.List;
 
-import org.eclipse.swt.widgets.Display;
-import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.geotools.renderer.lite.RendererUtilities;
 import org.junit.Before;
 import org.junit.Test;
 import org.opengis.geometry.MismatchedDimensionException;
@@ -27,7 +24,7 @@ public class LatLongTileCacheTest
 	public void before()
 	{
 		_tileCache = new TileCache(new Dimension(512, 512),
-				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), 90,
+				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), 90, -1,
 				DefaultGeographicCRS.WGS84, new TestTileLoader());
 	}
 
@@ -67,17 +64,10 @@ public class LatLongTileCacheTest
 	}
 
 	@Test
-	public void testGetTiles() {
-		Tile[][] tiles = _tileCache.getTiles(new Dimension(1000, 1000), 100000, new Coordinate(0,0));
-		
-		fail("not implemented");
-	}
-
-	@Test
 	public void testCalculateBoundsCenteredSmallScale()
 			throws MismatchedDimensionException, TransformException, FactoryException
 	{
-		asserCorrectCalculateBounds(new Dimension(1500, 650), 1000, new Coordinate(
+		asserCorrectCalculateBounds(new Dimension(1500, 650), TileCache.DEFAULT_WGS84[5], new Coordinate(
 				0, 0));
 	}
 
@@ -85,7 +75,7 @@ public class LatLongTileCacheTest
 	public void testCalculateBoundsCloseToPoleLargeScale()
 			throws MismatchedDimensionException, TransformException, FactoryException
 	{
-		asserCorrectCalculateBounds(new Dimension(1500, 650), 50000000,
+		asserCorrectCalculateBounds(new Dimension(1500, 650), TileCache.DEFAULT_WGS84[15],
 				new Coordinate(0, 89.99999));
 	}
 
@@ -93,7 +83,7 @@ public class LatLongTileCacheTest
 	public void testCalculateBoundsCloseToDatelineLargeScale()
 			throws MismatchedDimensionException, TransformException, FactoryException
 	{
-		asserCorrectCalculateBounds(new Dimension(1500, 650), 50000000,
+		asserCorrectCalculateBounds(new Dimension(1500, 650), TileCache.DEFAULT_WGS84[15],
 				new Coordinate(-180, 0));
 	}
 
@@ -101,8 +91,10 @@ public class LatLongTileCacheTest
 	public void testCalculateBoundsCenteredLargeScale()
 			throws MismatchedDimensionException, TransformException, FactoryException
 	{
-		asserCorrectCalculateBounds(new Dimension(1500, 650), 50000000,
+		asserCorrectCalculateBounds(new Dimension(1, 1), TileCache.DEFAULT_WGS84[15],
 				new Coordinate(0, 0));
+		
+		
 	}
 
 	/**
@@ -116,6 +108,10 @@ public class LatLongTileCacheTest
 				center);
 		double scale = _tileCache.calculateScale(bounds, dimension);
 		assertEquals(desiredScale, scale, 1);
+		
+		double ratio = ((double)dimension.width) / dimension.height;
+		
+		assertEquals(ratio, bounds.getWidth() / bounds.getHeight(), 0.000001);
 	}
 
 }

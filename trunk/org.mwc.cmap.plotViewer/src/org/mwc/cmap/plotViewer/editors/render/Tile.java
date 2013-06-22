@@ -41,4 +41,33 @@ public class Tile
 			image.dispose();
 		}
 	}
+	@Override
+	public String toString()
+	{
+		return "Tile [" + state + ", " + bounds + "]";
+	}
+	/**
+	 * Get the tile bounds.
+	 */
+	public ReferencedEnvelope getBounds()
+	{
+		return bounds;
+	}
+	
+	/**
+	 * Get Size of tile
+	 */
+	public Dimension getSize()
+	{
+		return size;
+	}
+
+	/**
+	 * Get current state of tile.
+	 */
+	public State getState()
+	{
+		return state;
+	}
+	
 }
