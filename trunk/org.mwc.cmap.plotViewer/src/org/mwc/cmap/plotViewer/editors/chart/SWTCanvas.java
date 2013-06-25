@@ -132,10 +132,13 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Shell;
 import org.mwc.cmap.core.CorePlugin;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
+import org.mwc.cmap.plotViewer.editors.render.LayerTileLoader;
+import org.mwc.cmap.plotViewer.editors.render.TileCache;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.CanvasType;
 import MWC.GUI.GeoToolsHandler;
+import MWC.GUI.Layer;
 import MWC.GenericData.WorldLocation;
 
 /**

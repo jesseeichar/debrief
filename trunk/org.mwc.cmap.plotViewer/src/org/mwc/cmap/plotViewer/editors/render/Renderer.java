@@ -2,48 +2,40 @@ package org.mwc.cmap.plotViewer.editors.render;
 
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.image.BufferedImage;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.graphics.RGB;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Display;
-import org.geotools.referencing.CRS;
+import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
-import org.mwc.cmap.core.CorePlugin;
-import org.mwc.cmap.core.preferences.ChartPrefsPage.PreferenceConstants;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
 import org.mwc.cmap.gt2plot.data.GridCoverageLayer;
-import org.mwc.cmap.gt2plot.proj.GeoToolsPainter;
+import org.mwc.cmap.gt2plot.data.JtsAdapter;
 import org.mwc.cmap.gt2plot.proj.GtProjection;
 import org.mwc.cmap.plotViewer.editors.chart.SWTCanvas;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
-import com.vividsolutions.jts.geom.Coordinate;
 
 import MWC.Algorithms.PlainProjection;
 import MWC.GUI.BlockingLayer;
 import MWC.GUI.CanvasType;
 import MWC.GUI.Layer;
 import MWC.GUI.Layers;
-import MWC.GUI.Canvas.MetafileCanvas;
 import MWC.GenericData.WorldArea;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
 
 public class Renderer
 {
@@ -86,12 +78,11 @@ public class Renderer
 			}
 		}
 	}
+
 	/**
 	 * The time to wait between checking to see if a new layer has been rendered.
 	 */
 	private static final int CANVAS_UPDATE_INTERVAL_MILLIS = 200;
-
-	private static final int INITIAL_CANVAS_UPDATE_INTERVAL_MILLIS = 50;
 
 	/**
 	 * create the transparent image we need to for collating multiple layers into
@@ -117,210 +108,87 @@ public class Renderer
 
 	protected SWTCanvas _theCanvas;
 
-	protected Image _swtImage;
-
 	protected WorldArea _lastDataArea;
 
-	private TileCache _tileCache;
-	
-	/**
-	 * our list of layered images.
-	 */
-	protected HashMap<Layer, Image> _renderedImageCache = new HashMap<Layer, Image>();
+	private TileCacheManager _tileCache;
+
+	private Map<Layer, Image> _images = new HashMap<Layer, Image>();
 
 	private ExecutorService _executorService = Executors.newCachedThreadPool();
 
-	private LinkedHashMap<Layer, Future<Image>> _futures = new LinkedHashMap<Layer, Future<Image>>();
+	private List<RenderFuture> _futures = new ArrayList<RenderFuture>();
+
+	private boolean _rendering = false;
 
 	private Map<String, GridCoverageLayer> _gcLayers = new HashMap<String, GridCoverageLayer>();
-
-	public synchronized void clearImages()
-	{
-
-		// tell the images to clear themselves out
-		Iterator<Image> iter = _renderedImageCache.values().iterator();
-		while (iter.hasNext())
-		{
-			Object nextI = iter.next();
-			if (nextI instanceof Image)
-			{
-				Image thisI = (Image) nextI;
-				thisI.dispose();
-			}
-			else
-			{
-				CorePlugin.logError(IStatus.ERROR,
-						"unexpected type of image found in buffer:" + nextI, null);
-			}
-		}
-
-		// and clear out our buffered layers (they all need to be repainted
-		// anyway)
-		_renderedImageCache.clear();
-
-		// also ditch the GeoTools image, if we have one
-		if (_swtImage != null)
-		{
-			// hey, we're done
-			_swtImage.dispose();
-			_swtImage = null;
-		}
-	}
 
 	protected boolean doubleBufferPlot()
 	{
 		return true;
 	}
 
-	/**
-	 * paint the solid background.
-	 * 
-	 * @param dest
-	 *          where we're painting to
-	 */
-	private void paintBackground(final CanvasType dest)
-	{
-		// right, don't fill in the background if we're not painting to the
-		// screen
-		boolean paintedBackground = false;
-
-		// also plot any GeoTools stuff
-		PlainProjection proj = dest.getProjection();
-
-		// fill the background, to start with
-		final Dimension sa = proj.getScreenArea();
-		final int width = sa.width;
-		final int height = sa.height;
-
-		if (proj instanceof GtProjection)
-		{
-			GtProjection gp = (GtProjection) proj;
-
-			// do we have a cached image?
-			if (_swtImage == null)
-			{
-				// nope, do we have any data?
-				if (gp.numLayers() > 0)
-				{
-					// now, GeoTools paint is an expensive operation, so I'm
-					// going to do
-					// all I can to avoid doing it. So, I'm going to see if any
-					// of the
-					// layers
-					// overlap with the current drawing area
-					if (gp.layersOverlapWith(proj.getVisibleDataArea()))
-					{
-
-						// now, if we're in relative projection mode, the
-						// projection-translate doesn't get
-						// performed until the first toScreen call. So do a
-						// toScreen before
-						// we start plotting the images
-						proj.toScreen(proj.getDataArea().getCentre());
-
-						BufferedImage img = GeoToolsPainter.drawAwtImage(width, height, gp,
-								dest.getBackgroundColor());
-						if (img != null)
-						{
-							ImageData swtImage = SWTCanvasAdapter.awtToSwt(img, width + 1, height + 1);
-							_swtImage = new Image(Display.getCurrent(), swtImage);
-						}
-					}
-				}
-			}
-
-			// ok, now we can paint it
-			if (dest instanceof SWTCanvasAdapter)
-			{
-				if (_swtImage != null)
-				{
-					SWTCanvasAdapter swtC = (SWTCanvasAdapter) dest;
-					int alpha = 255;
-					String alphaStr = CorePlugin.getDefault().getPreferenceStore()
-							.getString(PreferenceConstants.CHART_TRANSPARENCY);
-					if (alphaStr != null)
-						if (alphaStr.length() > 0)
-							alpha = Integer.parseInt(alphaStr);
-					swtC.drawSWTImage(_swtImage, 0, 0, width, height, alpha);
-					paintedBackground = true;
-				}
-			}
-			else if (dest instanceof MetafileCanvas)
-			{
-				// but do we have any data?
-				if (gp.numLayers() > 0)
-				{
-					// yes, generate the image
-					BufferedImage img = GeoToolsPainter.drawAwtImage(width, height, gp,
-							dest.getBackgroundColor());
-					dest.drawImage(img, 0, 0, width, height, null);
-				}
-			}
-
-		}
-
-		// have we painted the background yet?
-		if (!paintedBackground)
-		{
-			// hey, we don't have GeoTools to paint for us, fill in the
-			// background
-			// but, only fill in the background if we're not painting to the
-			// screen
-			if (dest instanceof SWTCanvas)
-			{
-				final Color theCol = dest.getBackgroundColor();
-				dest.setBackgroundColor(theCol);
-				dest.fillRect(0, 0, width, height);
-			}
-		}
-	}
-
 	public synchronized void removeImage(Layer changedLayer)
 	{
-		// get the image
-		Image theImage = _renderedImageCache.get(changedLayer);
-
-		// and ditch the image
-		if (theImage != null)
-		{
-			// dispose of the image
-			theImage.dispose();
-
-			// and delete that layer
-			_renderedImageCache.remove(changedLayer);
-		}
-
+		_tileCache.remove(changedLayer);
 	}
 
 	public synchronized void render(CanvasType dest)
 	{
 
+		DebugLogger.log("start rendering");
+
 		if (!(dest instanceof SWTCanvasAdapter))
 		{
 			throw new IllegalArgumentException(dest + " is not an SWTCanvas");
 		}
-		
+
 		// just double-check we have some layers (if we're part of an overview
 		// chart, we may not have...)
 		if (_theLayers == null)
-			return;
-
-		// check if we are currently rendering
-		if (!_futures.isEmpty())
 		{
+			DebugLogger.log("no Layers stopping rendering");
 			return;
 		}
 
+		// check if we are currently rendering
+		if (_rendering)
+		{
+			DebugLogger.log("already rendering");
+			return;
+		}
+
+		_rendering = true;
+		_futures.clear();
+
 		// check that we have a valid canvas (that the sizes are set)
 		final java.awt.Dimension sArea = dest.getProjection().getScreenArea();
+
 		if (sArea != null)
 		{
 			if (sArea.width > 0)
 			{
 
-				
-				initTileCache((SWTCanvas) dest);
-				
+				ReferencedEnvelope envelope = JtsAdapter
+						.toEnvelope(getCanvasProjection().getDataArea());
+
+				Dimension dimension = getCanvasProjection().getScreenArea();
+				StringBuilder builder = new StringBuilder("Starting to render:");
+				builder
+						.append("\n\t")
+						.append(
+								"before scale: "
+										+ JtsAdapter.toEnvelope(_theCanvas.getProjection()
+												.getDataArea()))
+						.append("\n\t")
+						.append("after scale: " + envelope)
+						.append("\n\t")
+						.append("center: " + envelope.centre())
+						.append("\n\t")
+						.append("Scale: " + _tileCache.getClosestScale(envelope, dimension))
+						.append("\n\t").append("ScreenSize: " + dimension);
+
+				DebugLogger.log(builder.toString());
+
 				// hey, we've plotted at least once, has the data area
 				// changed?
 				PlainProjection projection = getCanvasProjection();
@@ -328,25 +196,17 @@ public class Renderer
 				{
 					// remember the data area for next time
 					_lastDataArea = projection.getDataArea();
-
-					// clear out all of the layers we are using
-					clearImages();
 				}
 
-				// we also clear the layers if we're in relative projection mode
-				if (projection.getNonStandardPlotting())
-				{
-					clearImages();
-				}
-
-				int canvasHeight = getDrawHeightOfCanvas();
-				int canvasWidth = getDrawWidthOfCanvas();
 				ImageData _myImageTemplate = null;
+
+				int canvasWidth = getCanvasProjection().getScreenArea().width;
+				int canvasHeight = getCanvasProjection().getScreenArea().height;
 
 				_myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
 						canvasWidth, _myImageTemplate, "wsiearth.tif");
-				_myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
-						canvasWidth, _myImageTemplate, "clds.tif");
+				// _myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
+				// canvasWidth, _myImageTemplate, "clds.tif");
 
 				// ok, pass through the layers, repainting any which need it
 				Enumeration<Layer> numer = _theLayers.sortedElements();
@@ -358,21 +218,36 @@ public class Renderer
 							canvasWidth, _myImageTemplate, thisLayer);
 				}
 
+				int done = 0;
+				for (RenderFuture future : _futures)
+				{
+					if (future.isCancelled() || future.isDone())
+					{
+						done++;
+					}
+				}
 
-				Display.getCurrent().timerExec(INITIAL_CANVAS_UPDATE_INTERVAL_MILLIS,
-						new UpdateTimer((SWTCanvasAdapter) dest, this, true));
+				if (done == _futures.size())
+				{
+					try
+					{
+						paint((SWTCanvasAdapter) dest, true);
+					}
+					catch (InterruptedException e)
+					{
+						throw new RuntimeException(e);
+					}
+					catch (ExecutionException e)
+					{
+						throw new RuntimeException(e);
+					}
+				}
+				if (done < _futures.size())
+				{
+					Display.getCurrent().timerExec(CANVAS_UPDATE_INTERVAL_MILLIS,
+							new UpdateTimer((SWTCanvasAdapter) dest, this, true));
+				}
 			}
-		}
-	}
-
-	private void initTileCache(SWTCanvas dest)
-	{
-		// TODO check for CRS change
-		if (_tileCache == null) {
-			Point dpi = dest.getCanvas().getDisplay().getDPI();
-			double averageDpi = dpi.x + dpi.y / 2;
-			CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
-			_tileCache = new TileCache(new Dimension(512,512), TileCache.DEFAULT_WGS84, new Coordinate (-180,-90), averageDpi, crs);
 		}
 	}
 
@@ -382,7 +257,7 @@ public class Renderer
 	 * @param canvasHeight
 	 * @param canvasWidth
 	 * @param _myImageTemplate
-	 * @param fileName 
+	 * @param fileName
 	 * @return
 	 */
 	protected ImageData addHardcodedImage(CanvasType dest,
@@ -390,18 +265,21 @@ public class Renderer
 			ImageData _myImageTemplate, String fileName)
 	{
 		GridCoverageLayer layer;
-		if (!_gcLayers.containsKey(fileName)) {
+		if (!_gcLayers.containsKey(fileName))
+		{
 			layer = new org.mwc.cmap.gt2plot.data.GridCoverageLayer();
 			layer.setImageFile(new File(fileName));
 			layer.setVisible(true);
 
 			_gcLayers.put(fileName, layer);
-		} else {
+		}
+		else
+		{
 			layer = _gcLayers.get(fileName);
 		}
 
-		_myImageTemplate = renderLayer(dest, projection, canvasHeight,
-				canvasWidth, _myImageTemplate, layer);
+		_myImageTemplate = renderLayer(dest, projection, canvasHeight, canvasWidth,
+				_myImageTemplate, layer);
 		return _myImageTemplate;
 	}
 
@@ -418,37 +296,75 @@ public class Renderer
 			PlainProjection projection, int canvasHeight, int canvasWidth,
 			ImageData _myImageTemplate, final Layer thisLayer)
 	{
-		// do our double-buffering bit do we have a layer for this object
-		org.eclipse.swt.graphics.Image image = _renderedImageCache.get(thisLayer);
-		if (image == null)
+		// ok - do we have an image template?
+		if (_myImageTemplate == null)
 		{
-			// ok - do we have an image template?
-			if (_myImageTemplate == null)
+			// nope, better create one
+			Image template = new Image(Display.getCurrent(), canvasWidth,
+					canvasHeight);
+			// and remember it.
+			_myImageTemplate = template.getImageData();
+
+			// and ditch the template itself
+			template.dispose();
+		}
+
+		// ok, paint the layer into this canvas
+		if (thisLayer instanceof BlockingLayer)
+		{
+			TileCache tileCache = _tileCache.getTileCache(thisLayer, _myImageTemplate);
+			Dimension dimension = new Dimension(canvasWidth, canvasHeight);
+
+			Envelope envelope = JtsAdapter.toEnvelope(projection.getDataArea());
+			int scale = _tileCache.getClosestScale(envelope, dimension);
+
+			Coordinate centre = envelope.centre();
+			PositionedTile[][] tiles = tileCache.getTiles(dimension, scale, centre);
+
+			for (int i = 0; i < tiles.length; i++)
 			{
-				// nope, better create one
-				Image template = new Image(Display.getCurrent(), canvasWidth,
-						canvasHeight);
-				// and remember it.
-				_myImageTemplate = template.getImageData();
+				PositionedTile[] tileColumn = tiles[i];
+				for (int j = 0; j < tileColumn.length; j++)
+				{
+					PositionedTile tile = tileColumn[j];
+					TileRenderTask task = new TileRenderTask();
+					task.setDestCanvas(dest);
+					task.setDataProjection(projection);
+					task.setTile(i, j, tile);
 
-				// and ditch the template itself
-				template.dispose();
+					switch (tile.getState())
+					{
+					case READY:
+						_futures.add(new RenderFuture(new SynchronousFuture(task)));
+						break;
+					case ERROR:
+						_futures.add(new RenderFuture(new SynchronousFuture(task)));
+						break;
+					case LOADING:
+					case BLANK:
+						_futures.add(new RenderFuture(_executorService.submit(task)));
+						break;
+					default:
+						throw new RuntimeException("Unkown value: " + tile.getState());
+					}
+				}
 			}
+		}
+		else
+		{
+			LayerRenderTask task = new LayerRenderTask();
 
-			// ok, paint the layer into this canvas
-			RenderTask task = new RenderTask();
-			task.setImageTemplate(_myImageTemplate);
+			Image image = _images.get(thisLayer);
+			if (image == null) {
+				task.setImageTemplate(_myImageTemplate);
+			} else {
+				task.setImage(image);
+			}
 			task.setDestCanvas(dest);
 			task.setDataProjection(projection);
 			task.setLayer(thisLayer);
-			if (thisLayer instanceof BlockingLayer)
-			{
-				_futures.put(thisLayer, _executorService.submit(task));
-			}
-			else
-			{
-				_renderedImageCache.put(thisLayer, task.call());
-			}
+
+			_futures.add(new RenderFuture(new SynchronousFuture(task)));
 		}
 		return _myImageTemplate;
 	}
@@ -462,86 +378,79 @@ public class Renderer
 			// canvas has been disposed so we don't need to continue
 			return;
 		}
-		Set<Entry<Layer, Future<Image>>> entrySet = _futures.entrySet();
-
 		// first check if there is a new layer render for display
 		boolean needsUpdate = forceUpdate;
-		for (Map.Entry<Layer, Future<Image>> entry : entrySet)
+		for (RenderFuture renderFuture : _futures)
 		{
-			if (entry.getValue().isDone()
-					&& !_renderedImageCache.containsKey(entry.getKey()))
+			if (renderFuture.isDone() && !renderFuture.hasBeenDisplayed())
 			{
 				needsUpdate = true;
 				break;
 			}
 		}
 
+		int done = 0;
 		if (needsUpdate)
 		{
 			// a new layer is ready so we will draw the map again
-			paintBackground(canv);
-			for (GridCoverageLayer layer : _gcLayers.values())
+			for (RenderFuture future : _futures)
 			{
-				paintLayer(canv, layer);
-			}
-
-			Enumeration<Layer> elements = _theLayers.sortedElements();
-			while (elements.hasMoreElements())
-			{
-				Layer layer = elements.nextElement();
-
-				paintLayer(canv, layer);
+				done += paintRenderFuture(canv, future);
 			}
 
 			canv.flush();
 		}
 
-		if (!_futures.isEmpty())
+		this._rendering = done < _futures.size();
+		if (_rendering)
 		{
 			Display.getCurrent().timerExec(CANVAS_UPDATE_INTERVAL_MILLIS,
 					new UpdateTimer(canv, this, false));
 		}
 		else
 		{
-			canv.close();
+			DebugLogger.log("finished rendering: " + done + " out of "
+					+ _futures.size() + " tasks");
+			for (RenderFuture future : _futures)
+			{
+				future.dispose();
+			}
+			_futures.clear();
 		}
 	}
 
 	/**
 	 * @param canv
-	 * @param layer
+	 * @param future2
 	 * @throws InterruptedException
 	 * @throws ExecutionException
 	 */
-	protected void paintLayer(SWTCanvasAdapter canv, Layer layer)
-			throws InterruptedException, ExecutionException
+	protected int paintRenderFuture(SWTCanvasAdapter canv, RenderFuture future)
+			throws ExecutionException
 	{
-		Image image = _renderedImageCache.get(layer);
 
-		if (image == null)
+		if (future.isDone())
 		{
-			// see if it is still rendering
-			Future<Image> future = _futures.get(layer);
-			if (future != null && future.isDone())
+			try
 			{
-				image = future.get();
-				_renderedImageCache.put(layer, image);
-				_futures.remove(layer);
+				RenderTaskResult result = future.get();
+				result.draw(canv);
 			}
+			catch (InterruptedException e)
+			{
+				// indicates render has been cancelled.
+			}
+			catch (java.util.concurrent.CancellationException e)
+			{
+				// indicates render has been cancelled.
+			}
+			return 1;
+		}
+		else
+		{
+			return future.isCancelled() ? 1 : 0;
 		}
 
-		if (image != null)
-		{
-			Rectangle bounds = image.getBounds();
-			canv.drawSWTImage(image, 0, 0, bounds.width, bounds.height, 255);
-//			ImageLoader loader = new ImageLoader();
-//
-//			loader.data = new ImageData[] {
-//					image.getImageData()
-//			};
-//
-//			loader.save("E:\\Downloads\\debrief-" + layer.getName() + ".png", SWT.IMAGE_PNG);
-		}
 	}
 
 	/**
@@ -549,34 +458,32 @@ public class Renderer
 	 * 
 	 * Template method, can be overridden.
 	 */
-	protected synchronized PlainProjection getCanvasProjection()
+	private synchronized PlainProjection getCanvasProjection()
 	{
-		return _theCanvas.getProjection();
-	}
+		GtProjection rawProjection = (GtProjection) _theCanvas.getProjection();
+		GtProjection gtProjection = new GtProjection();
+		WorldArea dataArea = rawProjection.getDataArea();
+		Envelope envelope = JtsAdapter.toEnvelope(dataArea);
+		Dimension dimension = rawProjection.getScreenArea();
 
-	/**
-	 * Get the width of the component.
-	 * 
-	 * Template method, can be overridden.
-	 */
-	protected synchronized int getDrawWidthOfCanvas()
-	{
-		return _theCanvas.getSize().width;
-	}
+		gtProjection.setScreenArea(rawProjection.getScreenArea());
 
-	/**
-	 * Get the height of the component.
-	 * 
-	 * Template method, can be overridden.
-	 */
-	protected synchronized int getDrawHeightOfCanvas()
-	{
-		return _theCanvas.getSize().height;
+		int scale = _tileCache.getClosestScale(envelope, dimension);
+		Envelope bounds = _tileCache.calculateBounds(dimension, scale,
+				envelope.centre());
+		gtProjection.setDataArea(JtsAdapter.toWorldArea(bounds));
+
+		return rawProjection;
 	}
 
 	public synchronized void setTheCanvas(SWTCanvas _theCanvas)
 	{
 		this._theCanvas = _theCanvas;
+		double dpi = 90;
+		CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
+		this._tileCache = new TileCacheManager(new Dimension(256, 256),
+				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), dpi, -1, crs);
+
 	}
 
 	public synchronized void setTheLayers(Layers _theLayers)
@@ -587,16 +494,76 @@ public class Renderer
 	public synchronized void close()
 	{
 		_executorService.shutdownNow();
-		clearImages();
+		clearCaches();
+	}
 
+	/**
+	 * 
+	 */
+	protected void clearCaches()
+	{
+		_tileCache.clear();
+		for (Image image : _images.values())
+		{
+			image.dispose();
+		}
+
+		_images.clear();
 	}
 
 	public synchronized void cancel()
 	{
-		for (Future<?> future : _futures.values())
+		DebugLogger.log("starting cancelling");
+		long start = System.currentTimeMillis();
+		for (Iterator<RenderFuture> iterator = _futures.iterator(); iterator
+				.hasNext();)
 		{
+			RenderFuture future = iterator.next();
 			future.cancel(true);
+			if (future.isDone() || future.isCancelled())
+			{
+				future.dispose();
+				iterator.remove();
+			}
 		}
+
+		// try to cancel within 3 seconds and if impossible then bail.
+		while (!_futures.isEmpty() && System.currentTimeMillis() - start < 3000)
+		{
+			synchronized (this)
+			{
+				try
+				{
+					this.wait(50);
+				}
+				catch (InterruptedException e)
+				{
+					// continue?
+				}
+			}
+
+			for (Iterator<RenderFuture> iterator = _futures.iterator(); iterator
+					.hasNext();)
+			{
+				RenderFuture future = iterator.next();
+				future.cancel(true);
+				if (future.isDone() || future.isCancelled())
+				{
+					future.dispose();
+					iterator.remove();
+				}
+			}
+		}
+
+		DebugLogger.log("done cancelling: " + _futures.size() + " tasks");
+		_futures.clear();
+		_rendering = false;
+
+	}
+
+	public void canvasResized()
+	{
+		clearCaches();
 	}
 
 }

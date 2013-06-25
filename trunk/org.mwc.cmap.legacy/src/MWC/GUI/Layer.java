@@ -98,7 +98,6 @@
 package MWC.GUI;
 
 import java.io.Serializable;
-import java.util.Collection;
 import java.util.Enumeration;
 
 /**

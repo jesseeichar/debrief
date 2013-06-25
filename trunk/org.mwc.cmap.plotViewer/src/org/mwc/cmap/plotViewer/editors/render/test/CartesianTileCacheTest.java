@@ -1,4 +1,4 @@
-package org.mwc.cmap.plotViewer.editors.render;
+package org.mwc.cmap.plotViewer.editors.render.test;
 
 import static org.junit.Assert.*;
 
@@ -9,6 +9,8 @@ import org.geotools.referencing.CRS;
 import org.geotools.referencing.crs.DefaultEngineeringCRS;
 import org.junit.Before;
 import org.junit.Test;
+import org.mwc.cmap.plotViewer.editors.render.Tile;
+import org.mwc.cmap.plotViewer.editors.render.TileCache;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Coordinate;
@@ -69,7 +71,7 @@ public class CartesianTileCacheTest
 		int scale = _tileCache.getClosestScale(new Envelope(-100, 100, -10, 10),
 				new Dimension(10, 10));
 
-		assertEquals(10000, scale);
+		assertEquals(10, scale);
 
 		try
 		{
@@ -146,17 +148,17 @@ public class CartesianTileCacheTest
 			assertEquals(4, column.length);
 		}
 		
-		assertBounds(-90,-80,-100,-90, DefaultEngineeringCRS.CARTESIAN_2D, tiles[0][0].getBounds());
-		assertBounds(-60,-50,-50,-40, DefaultEngineeringCRS.CARTESIAN_2D, tiles[3][5].getBounds());
+		assertBounds(-80,-70,-90,-80, DefaultEngineeringCRS.CARTESIAN_2D, tiles[0][0].getBounds());
+		assertBounds(-70,-60,-60,-50, DefaultEngineeringCRS.CARTESIAN_2D, tiles[1][3].getBounds());
 		
 		for (int i = 0; i < tiles.length; i++)
 		{
 			Tile[] row = tiles[i];
-			int minx = -90 + (10 * i);
+			int minx = -80 + (10 * i);
 			int maxx = minx + 10;
 			for (int j = 0; j < row.length; j++)
 			{
-				int miny = -100 + (10 * j);
+				int miny = -90 + (10 * j);
 				int maxy = miny + 10;
 				
 				assertBounds(minx,maxx,miny,maxy, DefaultEngineeringCRS.CARTESIAN_2D, tiles[i][j].getBounds());
@@ -196,7 +198,46 @@ public class CartesianTileCacheTest
 			}
 		}
 	}
+	
+	@Test
+	public void testGetTiles_TilesAtBottomLeft()
+	{
+		Dimension screenSize = new Dimension(30, 50);
+		Coordinate center = new Coordinate(-100 + 15, -100 + 25);
+		
+		
+		Tile[][] tiles = _tileCache.getTiles(screenSize, 1, center);
+		
+		assertEquals(3, tiles.length);
+		for (Tile[] row : tiles)
+		{
+			assertEquals(5, row.length);
+		}
+		
+		assertBounds(-100,-90,-100,-90, DefaultEngineeringCRS.CARTESIAN_2D, tiles[0][0].getBounds());
+		assertBounds(-80,-70,-60,-50, DefaultEngineeringCRS.CARTESIAN_2D, tiles[2][4].getBounds());
+		
+		for (int i = 0; i < tiles.length; i++)
+		{
+			Tile[] row = tiles[i];
+			int minx = -100 + (10 * i);
+			int maxx = minx + 10;
+			for (int j = 0; j < row.length; j++)
+			{
+				int miny = -100 + (10 * j);
+				int maxy = miny + 10;
+				
+				assertBounds(minx,maxx,miny,maxy, DefaultEngineeringCRS.CARTESIAN_2D, tiles[i][j].getBounds());
+			}
+		}
+	}
 
+	@Test(expected=IllegalArgumentException.class)
+	public void testOutOfBoundsGetTiles() {
+		Dimension screenSize = new Dimension(30, 50);
+		Coordinate center = new Coordinate(-100, -100);
+		_tileCache.getTiles(screenSize, 1, center);
+	}
 	private void assertBounds(double minx, double maxx, double miny, double maxy,
 			CoordinateReferenceSystem crs, ReferencedEnvelope actualBounds)
 	{

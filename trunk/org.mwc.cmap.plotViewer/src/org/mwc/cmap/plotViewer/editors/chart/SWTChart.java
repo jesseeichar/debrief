@@ -594,12 +594,12 @@ public abstract class SWTChart extends PlainChart implements ISelectionProvider
 	public void canvasResized()
 	{
 
-		_renderer.clearImages();
-
 		// now we've cleared the layers, call the parent resize method (which causes
 		// a repaint
 		// of the layers)
 		super.canvasResized();
+		
+		_renderer.canvasResized();
 	}
 
 	public abstract void chartFireSelectionChanged(ISelection sel);
@@ -842,7 +842,6 @@ public abstract class SWTChart extends PlainChart implements ISelectionProvider
 	@Override
 	public void paintMe(final CanvasType dest)
 	{
-
 		this._renderer.render(dest);
 	}
 	
@@ -909,7 +908,7 @@ public abstract class SWTChart extends PlainChart implements ISelectionProvider
 	public final void update()
 	{
 		// clear out the layers object
-		_renderer.clearImages();
+		_renderer.render(this._theCanvas);
 
 		// and start the update
 		_theCanvas.updateMe();
@@ -931,12 +930,6 @@ public abstract class SWTChart extends PlainChart implements ISelectionProvider
 			// one takes a finite time. Leave the app to do it on it's own
 			// --- chuck in a GC, to clear the old image allocation
 			// --- System.gc();
-
-			// hey, it's not one of our GeoTools layers is it?
-			if (changedLayer instanceof ExternallyManagedDataLayer)
-			{
-				_renderer.clearImages();
-			}
 
 			// and trigger update
 			_theCanvas.updateMe();

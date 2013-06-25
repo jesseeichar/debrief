@@ -1,6 +1,7 @@
-package org.mwc.cmap.plotViewer.editors.render;
+package org.mwc.cmap.plotViewer.editors.render.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.awt.Dimension;
@@ -8,6 +9,9 @@ import java.awt.Dimension;
 import org.geotools.referencing.crs.DefaultGeographicCRS;
 import org.junit.Before;
 import org.junit.Test;
+import org.mwc.cmap.plotViewer.editors.render.PositionedTile;
+import org.mwc.cmap.plotViewer.editors.render.Tile;
+import org.mwc.cmap.plotViewer.editors.render.TileCache;
 import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.TransformException;
@@ -112,6 +116,26 @@ public class LatLongTileCacheTest
 		double ratio = ((double)dimension.width) / dimension.height;
 		
 		assertEquals(ratio, bounds.getWidth() / bounds.getHeight(), 0.000001);
+	}
+	
+	@Test
+	public void testGetTiles() {
+		Dimension screenSize = new Dimension(900, 640);
+		int scale = 1000000;
+		Coordinate center = new Coordinate(1.34,1.44);
+		PositionedTile[][] tiles = _tileCache.getTiles(screenSize, scale, center);
+		Envelope expectedBounds = _tileCache.calculateBounds(screenSize, scale, center);
+		Envelope actualBounds = new Envelope(center);
+		
+		for (PositionedTile[] column : tiles)
+		{
+			for (PositionedTile tile : column)
+			{
+				actualBounds.expandToInclude(tile.getBounds());
+			}
+		}
+		
+		assertTrue(actualBounds.contains(expectedBounds));
 	}
 
 }

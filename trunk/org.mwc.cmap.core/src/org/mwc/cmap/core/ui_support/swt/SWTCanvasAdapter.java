@@ -542,7 +542,7 @@ public class SWTCanvasAdapter implements CanvasType, Serializable, Editable,
 		if (!_theDest.isDisposed())
 		{
 			_theDest.setAlpha(alphaTransparency);
-			_theDest.drawImage(img, x, y, width, height, x, y, width, height);
+			_theDest.drawImage(img, 0, 0, width, height, x, y, width, height);
 			_theDest.setAlpha(255);
 		}
 
@@ -550,6 +550,25 @@ public class SWTCanvasAdapter implements CanvasType, Serializable, Editable,
 
 		return false;
 
+	}
+	
+	public final boolean drawSWTImage(final Image img, final int srcX, final int srcY, final int destX, final int destY,
+			final int width, final int height, int alphaTransparency)
+	{
+		if (_theDest == null)
+			return true;
+		
+		if (!_theDest.isDisposed())
+		{
+			_theDest.setAlpha(alphaTransparency);
+			_theDest.drawImage(img, srcX, srcY, width, height, destX, destY, width, height);
+			_theDest.setAlpha(255);
+		}
+		
+		// return _theDest.drawImage(img, x, y, width, height, observer);
+		
+		return false;
+		
 	}
 
 	public final void drawLine(final int x1, final int y1, final int x2,

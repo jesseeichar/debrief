@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.NoninvertibleTransformException;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -12,6 +11,7 @@ import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Enumeration;
+import java.util.Random;
 
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.io.AbstractGridCoverage2DReader;
@@ -24,10 +24,10 @@ import org.geotools.renderer.lite.RendererUtilities;
 import org.geotools.renderer.lite.gridcoverage2d.GridCoverageRenderer;
 import org.geotools.styling.RasterSymbolizer;
 import org.geotools.styling.StyleBuilder;
-import org.mwc.cmap.gt2plot.proj.GtProjection;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
+import MWC.Algorithms.PlainProjection;
 import MWC.GUI.BlockingLayer;
 import MWC.GUI.CanvasType;
 import MWC.GUI.Editable;
@@ -35,8 +35,6 @@ import MWC.GUI.Layer;
 import MWC.GUI.Plottable;
 import MWC.GenericData.WorldArea;
 import MWC.GenericData.WorldLocation;
-
-import com.vividsolutions.jts.geom.Envelope;
 
 public class GridCoverageLayer implements Layer, BlockingLayer
 {
@@ -64,7 +62,7 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 	@Override
 	public void paint(final CanvasType dest)
 	{
-		GtProjection prj = (GtProjection) dest.getProjection();
+		PlainProjection prj = dest.getProjection();
 		WorldArea visibleArea = prj.getVisibleDataArea();
 		Dimension screenArea = prj.getScreenArea();
 		CoordinateReferenceSystem destinationCRS = DefaultGeographicCRS.WGS84;

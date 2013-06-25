@@ -1,56 +1,49 @@
 package org.mwc.cmap.plotViewer.editors.render;
 
-import java.util.concurrent.Callable;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.Rectangle;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
 
-import MWC.Algorithms.PlainProjection;
-import MWC.GUI.CanvasType;
 import MWC.GUI.Layer;
 
-public class RenderTask implements Callable<Image>
+public class LayerRenderTask extends AbstractRenderTask
 {
-
-	private ImageData _myImageTemplate;
-	private CanvasType _destCanvas;
-	private PlainProjection _projection;
 	private Layer _layer;
-
-	public void setImageTemplate(ImageData myImageTemplate)
-	{
-		_myImageTemplate = myImageTemplate;
-	}
-
-	public void setDestCanvas(CanvasType dest)
-	{
-		this._destCanvas = dest;
-	}
-
-	public void setDataProjection(PlainProjection projection)
-	{
-		this._projection = projection;
-
-	}
 
 	public void setLayer(Layer thisLayer)
 	{
 		this._layer = thisLayer;
 	}
 
+	protected ImageData _myImageTemplate;
+	private Image _image;
+
+	public void setImageTemplate(ImageData myImageTemplate)
+	{
+		_myImageTemplate = myImageTemplate;
+	}
+
+	public void setImage(Image image)
+	{
+		this._image = image;
+	}
+
 	@Override
-	public Image call()
+	public RenderTaskResult call()
 	{
 		// just check if this layer is visible
-		if (_layer.getVisible())
+		if (isVisible())
 		{
 			try
 			{
 				// ok, and now the SWT image
-				Image image = Renderer.createSWTImage(_myImageTemplate);
+				Image image = this._image;
+				if (this._image == null) {
+					image = Renderer.createSWTImage(_myImageTemplate);
+				}
 
 				// we need to wrap it into a GC so we can write to it.
 				GC newGC = new GC(image);
@@ -67,7 +60,7 @@ public class RenderTask implements Callable<Image>
 
 				// and store the GC
 				ca.startDraw(newGC);
-				_layer.paint(ca);
+				paint(ca);
 
 				// done.
 				ca.endDraw(null);
@@ -75,7 +68,16 @@ public class RenderTask implements Callable<Image>
 				// and ditch the GC
 				newGC.dispose();
 
-				return image;
+				Rectangle bounds = image.getBounds();
+				return new RenderTaskResult(image, new Rectangle(0, 0, bounds.width, bounds.height), _layer.getName())
+				{
+
+					@Override
+					public void dispose()
+					{
+						_image.dispose();
+					}
+				};
 			}
 			catch (Throwable e)
 			{
@@ -88,4 +90,15 @@ public class RenderTask implements Callable<Image>
 			return null;
 		}
 	}
+
+	protected boolean isVisible()
+	{
+		return _layer.getVisible();
+	}
+
+	protected void paint(SWTCanvasAdapter ca)
+	{
+		_layer.paint(ca);
+	}
+
 }

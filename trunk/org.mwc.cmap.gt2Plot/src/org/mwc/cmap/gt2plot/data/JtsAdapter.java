@@ -5,6 +5,7 @@ import org.geotools.referencing.CRS;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
 
 import MWC.GenericData.WorldArea;
 import MWC.GenericData.WorldLocation;
@@ -41,7 +42,7 @@ public class JtsAdapter
 		return new WorldLocation(pixelToWorld.y, pixelToWorld.x, pixelToWorld.z);
 	}
 
-	public static WorldArea toWorldArea(ReferencedEnvelope bounds)
+	public static WorldArea toWorldArea(Envelope bounds)
 	{
 		WorldArea worldArea = new WorldArea(new WorldLocation(bounds.getMaxY(), bounds.getMinX(), 0), new WorldLocation(bounds.getMinY(), bounds.getMaxX(), 0));
 		return worldArea;

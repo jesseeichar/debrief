@@ -1,12 +1,13 @@
 /**
  * 
  */
-package org.mwc.cmap.plotViewer.editors.render;
+package org.mwc.cmap.plotViewer.editors.render.test;
 
 import java.awt.Dimension;
 
 import org.eclipse.swt.graphics.Image;
 import org.geotools.geometry.jts.ReferencedEnvelope;
+import org.mwc.cmap.plotViewer.editors.render.TileLoader;
 
 import com.vividsolutions.jts.util.Assert;
 
