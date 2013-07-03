@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -203,13 +204,50 @@ public class Renderer
 				int canvasWidth = getCanvasProjection().getScreenArea().width;
 				int canvasHeight = getCanvasProjection().getScreenArea().height;
 
-				_myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
-						canvasWidth, _myImageTemplate, "wsiearth.tif");
-				// _myImageTemplate = addHardcodedImage(dest, projection, canvasHeight,
-				// canvasWidth, _myImageTemplate, "clds.tif");
-
 				// ok, pass through the layers, repainting any which need it
-				Enumeration<Layer> numer = _theLayers.sortedElements();
+				// Enumeration<Layer> numer = _theLayers.sortedElements();
+
+				// The following is just to add the hardcoded files. For integration
+				// deleted.
+				Enumeration<Layer> numer = new Enumeration<Layer>()
+				{
+					Iterator<String> hardCoded = Arrays
+							.asList("wsiearth.tif", "clds.tif").iterator();
+					Enumeration<Layer> actualLayers = _theLayers.sortedElements();
+
+					@Override
+					public boolean hasMoreElements()
+					{
+						return hardCoded.hasNext() || actualLayers.hasMoreElements();
+					}
+
+					@Override
+					public Layer nextElement()
+					{
+						if (hardCoded.hasNext())
+						{
+							String fileName = hardCoded.next();
+							GridCoverageLayer layer;
+							if (!_gcLayers.containsKey(fileName))
+							{
+								layer = new org.mwc.cmap.gt2plot.data.GridCoverageLayer();
+								layer.setImageFile(new File(fileName));
+								layer.setVisible(true);
+
+								_gcLayers.put(fileName, layer);
+							}
+							else
+							{
+								layer = _gcLayers.get(fileName);
+							}
+							return layer;
+						}
+						else
+						{
+							return actualLayers.nextElement();
+						}
+					}
+				};
 				while (numer.hasMoreElements())
 				{
 					final Layer thisLayer = numer.nextElement();
@@ -257,38 +295,6 @@ public class Renderer
 	 * @param canvasHeight
 	 * @param canvasWidth
 	 * @param _myImageTemplate
-	 * @param fileName
-	 * @return
-	 */
-	protected ImageData addHardcodedImage(CanvasType dest,
-			PlainProjection projection, int canvasHeight, int canvasWidth,
-			ImageData _myImageTemplate, String fileName)
-	{
-		GridCoverageLayer layer;
-		if (!_gcLayers.containsKey(fileName))
-		{
-			layer = new org.mwc.cmap.gt2plot.data.GridCoverageLayer();
-			layer.setImageFile(new File(fileName));
-			layer.setVisible(true);
-
-			_gcLayers.put(fileName, layer);
-		}
-		else
-		{
-			layer = _gcLayers.get(fileName);
-		}
-
-		_myImageTemplate = renderLayer(dest, projection, canvasHeight, canvasWidth,
-				_myImageTemplate, layer);
-		return _myImageTemplate;
-	}
-
-	/**
-	 * @param dest
-	 * @param projection
-	 * @param canvasHeight
-	 * @param canvasWidth
-	 * @param _myImageTemplate
 	 * @param thisLayer
 	 * @return
 	 */
@@ -312,7 +318,8 @@ public class Renderer
 		// ok, paint the layer into this canvas
 		if (thisLayer instanceof BlockingLayer)
 		{
-			TileCache tileCache = _tileCache.getTileCache(thisLayer, _myImageTemplate);
+			TileCache tileCache = _tileCache
+					.getTileCache(thisLayer, _myImageTemplate);
 			Dimension dimension = new Dimension(canvasWidth, canvasHeight);
 
 			Envelope envelope = JtsAdapter.toEnvelope(projection.getDataArea());
@@ -353,9 +360,12 @@ public class Renderer
 			LayerRenderTask task = new LayerRenderTask();
 
 			Image image = _images.get(thisLayer);
-			if (image == null) {
+			if (image == null)
+			{
 				task.setImageTemplate(_myImageTemplate);
-			} else {
+			}
+			else
+			{
 				task.setImage(image);
 			}
 			task.setDestCanvas(dest);

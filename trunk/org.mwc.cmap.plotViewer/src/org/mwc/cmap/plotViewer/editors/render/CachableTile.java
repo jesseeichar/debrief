@@ -86,6 +86,7 @@ public class CachableTile implements Tile
 				}
 			} catch (Throwable t) {
 				_state = TileState.ERROR;
+				t.printStackTrace();
 				return _errorImage;
 			}
 		}

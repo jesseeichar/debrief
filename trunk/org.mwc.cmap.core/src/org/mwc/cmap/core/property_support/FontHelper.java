@@ -33,6 +33,11 @@ public class FontHelper extends EditorHelper
 	 */
 	protected static HashMap<FontData, java.awt.Font> _awtFonts;
 
+	public static void init() {
+		if (_fontRegistry == null) {
+			_fontRegistry = new FontRegistry(Display.getCurrent(), true);
+		}
+	}
 
 	public static class FontDataDialogCellEditor extends DialogCellEditor
 	{
@@ -117,53 +122,82 @@ public class FontHelper extends EditorHelper
 	 * @param javaFont
 	 * @return
 	 */
-	public static org.eclipse.swt.graphics.Font convertFont(java.awt.Font javaFont)
+	public static org.eclipse.swt.graphics.Font convertFont(final java.awt.Font javaFont)
 	{
-	
-		// check we have our registry
-		if (_fontRegistry == null)
-			_fontRegistry = new FontRegistry(Display.getCurrent(), true);
-
 		if (_myFontList == null)
 			_myFontList = new HashMap<java.awt.Font, Font>();
 
 		// see if we've got the font in our local list
-		org.eclipse.swt.graphics.Font thisFont = (Font) _myFontList.get(javaFont);
+		final org.eclipse.swt.graphics.Font[] thisFont = new org.eclipse.swt.graphics.Font[1];
+		thisFont[0] = (Font) _myFontList.get(javaFont);
 
-		// did we find it?
-		if (thisFont == null)
-		{ 
-			// nope, better go and get it then...
-			final String fontName = "" + javaFont.hashCode();
-
-			// ok - now see if we've got the font
-			thisFont = _fontRegistry.get(fontName);
-
-			// do we have a font for this style?
-			if (!_fontRegistry.hasValueFor(fontName))
-			{
-				// bugger, we'll have to create it
-
-				int size = javaFont.getSize();
-				int style = javaFont.getStyle();
-				String name = javaFont.getName();
-
-				// WORKAROUND
-				// - on windows, our 'sans serif' recorded in the xml file doesn't get
-				// translated to Arial. So, we do it by hand
-				if (name.equals("Sans Serif"))
-					name = "Arial";
-
-				FontData newF = new FontData(name, size, style);
-				_fontRegistry.put(fontName, new FontData[] { newF });
-			}
-
-			// ok, try to receive it. if we don't we'll just get a default one any
-			// way. cool.
-			thisFont = _fontRegistry.get(fontName);
-			
-			_myFontList.put(javaFont, thisFont);
+		if (thisFont[0] != null)
+		{
+			return thisFont[0];
 		}
+
+		if (Display.getCurrent() == null)
+		{
+			Display.getDefault().syncExec(new Runnable()
+			{
+
+				@Override
+				public void run()
+				{
+					thisFont[0] = doGetFont(javaFont);
+				}
+			});
+		}
+		else
+		{
+			thisFont[0] = doGetFont(javaFont);
+		}
+
+		return thisFont[0];
+	}
+
+	/**
+	 * @param javaFont
+	 * @param thisFont
+	 * @return
+	 */
+	protected static org.eclipse.swt.graphics.Font doGetFont(
+			java.awt.Font javaFont)
+	{
+		// check we have our registry
+		if (_fontRegistry == null)
+			_fontRegistry = new FontRegistry(Display.getCurrent(), true);
+		
+		// nope, better go and get it then...
+		final String fontName = "" + javaFont.hashCode();
+
+		// ok - now see if we've got the font
+		Font thisFont = _fontRegistry.get(fontName);
+
+		// do we have a font for this style?
+		if (!_fontRegistry.hasValueFor(fontName))
+		{
+			// bugger, we'll have to create it
+
+			int size = javaFont.getSize();
+			int style = javaFont.getStyle();
+			String name = javaFont.getName();
+
+			// WORKAROUND
+			// - on windows, our 'sans serif' recorded in the xml file doesn't get
+			// translated to Arial. So, we do it by hand
+			if (name.equals("Sans Serif"))
+				name = "Arial";
+
+			FontData newF = new FontData(name, size, style);
+			_fontRegistry.put(fontName, new FontData[] { newF });
+		}
+
+		// ok, try to receive it. if we don't we'll just get a default one any
+		// way. cool.
+		thisFont = _fontRegistry.get(fontName);
+		
+		_myFontList.put(javaFont, thisFont);
 
 		return thisFont;
 	}
