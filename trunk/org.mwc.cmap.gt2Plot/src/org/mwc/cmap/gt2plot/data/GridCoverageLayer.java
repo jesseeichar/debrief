@@ -45,6 +45,7 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 	private Serializable _sourceObject;
 	private RasterSymbolizer _symbolizer;
 	private Reference<GridCoverage2D> _coverageCache;
+	private Random random = new Random();
 
 	public GridCoverageLayer()
 	{
@@ -62,6 +63,15 @@ public class GridCoverageLayer implements Layer, BlockingLayer
 	@Override
 	public void paint(final CanvasType dest)
 	{
+		try
+		{
+			Thread.sleep(random.nextInt(1000));
+		}
+		catch (InterruptedException e1)
+		{
+			throw new RuntimeException(e1);
+		}
+
 		PlainProjection prj = dest.getProjection();
 		WorldArea visibleArea = prj.getVisibleDataArea();
 		Dimension screenArea = prj.getScreenArea();

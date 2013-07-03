@@ -17,6 +17,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import MWC.GUI.Layer;
 
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
 
 public class TileCacheManager extends TileCacheSupport
 {
@@ -45,11 +46,67 @@ public class TileCacheManager extends TileCacheSupport
 	 *          0 is no decimals and any positive integer will define the number
 	 *          of decimal places up-to the maximum supported by double
 	 */
-	public TileCacheManager(Dimension tileSize, int[] scales,
+	public TileCacheManager(Dimension tileSize, double[] scales,
 			Coordinate bottomLeft, double dpi, int precision,
 			CoordinateReferenceSystem crs)
 	{
 		super(tileSize, scales, bottomLeft, dpi, precision, crs);
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * 
+	 * @param tileSize
+	 *          size of the tiles
+	 * @param numScales
+	 *          the number of scales to generate
+	 * @param minEnvelope 
+	 * 				  The smallest envelope to be allowed
+	 * @param maxEnvelope
+	 *          The maximum envelope to be allowed
+	 * @param dpi
+	 *          dpi of the display
+	 * @param crs
+	 *          the crs of the cache
+	 * @param precision
+	 *          the number of decimal digits. -1 will be maximum double precision,
+	 *          0 is no decimals and any positive integer will define the number
+	 *          of decimal places up-to the maximum supported by double
+	 */
+	public TileCacheManager(Dimension tileSize, int numScales,
+			Envelope minEnvelope, Envelope maxEnvelope, double dpi, int precision,
+			CoordinateReferenceSystem crs)
+	{
+		super(tileSize, numScales, minEnvelope, maxEnvelope, dpi, precision, crs);
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * 
+	 * @param tileSize
+	 *          size of the tiles
+	 * @param numScales
+	 *          the number of scales to generate
+	 * @param minScale
+	 * 				  The smallest scale to allow.
+	 * @param maxEnvelope
+	 *          The maximum envelope to be allowed
+	 * @param dpi
+	 *          dpi of the display
+	 * @param crs
+	 *          the crs of the cache
+	 * @param precision
+	 *          the number of decimal digits. -1 will be maximum double precision,
+	 *          0 is no decimals and any positive integer will define the number
+	 *          of decimal places up-to the maximum supported by double
+	 */
+	public TileCacheManager(Dimension tileSize, int numScales,
+			double minScale, Envelope maxEnvelope, double dpi, int precision,
+			CoordinateReferenceSystem crs)
+	{
+		super(tileSize, numScales, minScale, maxEnvelope, dpi, precision, crs);
 	}
 
 	public void clear()

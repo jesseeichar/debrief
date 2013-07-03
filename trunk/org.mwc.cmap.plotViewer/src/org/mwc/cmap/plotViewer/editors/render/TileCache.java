@@ -2,7 +2,6 @@ package org.mwc.cmap.plotViewer.editors.render;
 
 import java.awt.Dimension;
 import java.awt.Rectangle;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,7 +81,7 @@ public class TileCache extends TileCacheSupport
 	/**
 	 * Scale -> index in {@link #_caches}
 	 */
-	private final Map<Integer, Integer> _cacheIndices = new HashMap<Integer, Integer>();
+	private final Map<Double, Integer> _cacheIndices = new HashMap<Double, Integer>();
 	private ScaleLevelCache[] _caches;
 
 	private TileLoader _loader;
@@ -115,7 +114,7 @@ public class TileCache extends TileCacheSupport
 	 * @param errorImage
 	 * 					An image to display when there is an error loading a tile.
 	 */
-	public TileCache(Dimension tileSize, int[] scales, Coordinate bottomLeft,
+	public TileCache(Dimension tileSize, double[] scales, Coordinate bottomLeft,
 			double dpi, int precision, CoordinateReferenceSystem crs,
 			TileLoader loader, Image errorImage)
 	{
@@ -125,7 +124,6 @@ public class TileCache extends TileCacheSupport
 		this._loader = loader;
 		this._errorImage = errorImage;
 
-		Arrays.sort(scales);
 		_caches = new ScaleLevelCache[scales.length];
 		for (int i = 0; i < scales.length; i++)
 		{
@@ -133,6 +131,79 @@ public class TileCache extends TileCacheSupport
 		}
 	}
 
+	/**
+	 * Constructor
+	 * 
+	 * 
+	 * @param tileSize
+	 *          size of the tiles
+	 * @param numScales
+	 *          the number of scales to generate
+	 * @param minEnvelope 
+	 * 				  The smallest envelope to be allowed
+	 * @param maxEnvelope
+	 *          The maximum envelope to be allowed
+	 * @param dpi
+	 *          dpi of the display
+	 * @param crs
+	 *          the crs of the cache
+	 * @param precision
+	 *          the number of decimal digits. -1 will be maximum double precision,
+	 *          0 is no decimals and any positive integer will define the number
+	 *          of decimal places up-to the maximum supported by double
+	 * @param loader
+	 *          the strategy object used for loading the imagery of tiles.
+	 * @param errorImage
+	 * 					An image to display when there is an error loading a tile.
+	 */
+	public TileCache(Dimension tileSize, int numScales,
+			Envelope minEnvelope, Envelope maxEnvelope, double dpi, int precision,
+			CoordinateReferenceSystem crs, TileLoader loader, Image errorImage)
+	{
+		this(tileSize, numScales, calculateScale(minEnvelope, tileSize, crs, dpi),
+				maxEnvelope, dpi, precision, crs, loader, errorImage);
+	}
+	/**
+	 * Constructor
+	 * 
+	 * 
+	 * @param tileSize
+	 *          size of the tiles
+	 * @param numScales
+	 *          the number of scales to generate
+	 * @param minScale
+	 * 				  The smallest scale to allow.
+	 * @param maxEnvelope
+	 *          The maximum envelope to be allowed
+	 * @param dpi
+	 *          dpi of the display
+	 * @param crs
+	 *          the crs of the cache
+	 * @param precision
+	 *          the number of decimal digits. -1 will be maximum double precision,
+	 *          0 is no decimals and any positive integer will define the number
+	 *          of decimal places up-to the maximum supported by double
+	 * @param loader
+	 *          the strategy object used for loading the imagery of tiles.
+	 * @param errorImage
+	 * 					An image to display when there is an error loading a tile.
+	 */
+	public TileCache(Dimension tileSize, int numScales,
+			double minScale, Envelope maxEnvelope, double dpi, int precision,
+			CoordinateReferenceSystem crs, TileLoader loader, Image errorImage)
+	{
+		super(tileSize, numScales, minScale, maxEnvelope, dpi, precision, crs);
+
+		Assert.isTrue(loader != null, "Loader must be non-null");
+		this._loader = loader;
+		this._errorImage = errorImage;
+
+		_caches = new ScaleLevelCache[_scales.length];
+		for (int i = 0; i < _scales.length; i++)
+		{
+			_cacheIndices.put(_scales[i], i);
+		}
+	}
 	/**
 	 * Calculate and create/get tiles for the current view area.
 	 * 
@@ -145,7 +216,7 @@ public class TileCache extends TileCacheSupport
 	 * @return the tiles in a x,y array of tiles. getTiles[0][0] will get the
 	 *         first tile to be drawn at the bottom left location.
 	 */
-	public synchronized PositionedTile[][] getTiles(Dimension screenSize, int scale, Coordinate center)
+	public synchronized PositionedTile[][] getTiles(Dimension screenSize, double scale, Coordinate center)
 	{
 		int minXTileCount = (int) Math.ceil(((double) screenSize.width)
 				/ _tileSize.width);
@@ -254,7 +325,7 @@ public class TileCache extends TileCacheSupport
 	 * @param scale
 	 * @return
 	 */
-	protected synchronized ScaleLevelCache getCache(int scale)
+	protected synchronized ScaleLevelCache getCache(double scale)
 	{
 		int index = _cacheIndices.get(scale);
 		ScaleLevelCache cache = _caches[index];

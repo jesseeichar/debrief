@@ -212,7 +212,7 @@ public class Renderer
 				Enumeration<Layer> numer = new Enumeration<Layer>()
 				{
 					Iterator<String> hardCoded = Arrays
-							.asList("wsiearth.tif", "clds.tif").iterator();
+							.asList("wsiearth.tif"/*, "clds.tif"*/).iterator();
 					Enumeration<Layer> actualLayers = _theLayers.sortedElements();
 
 					@Override
@@ -323,7 +323,7 @@ public class Renderer
 			Dimension dimension = new Dimension(canvasWidth, canvasHeight);
 
 			Envelope envelope = JtsAdapter.toEnvelope(projection.getDataArea());
-			int scale = _tileCache.getClosestScale(envelope, dimension);
+			double scale = _tileCache.getClosestScale(envelope, dimension);
 
 			Coordinate centre = envelope.centre();
 			PositionedTile[][] tiles = tileCache.getTiles(dimension, scale, centre);
@@ -476,7 +476,7 @@ public class Renderer
 
 		gtProjection.setScreenArea(rawProjection.getScreenArea());
 
-		int scale = _tileCache.getClosestScale(envelope, dimension);
+		double scale = _tileCache.getClosestScale(envelope, dimension);
 		Envelope bounds = _tileCache.calculateBounds(dimension, scale,
 				envelope.centre());
 		gtProjection.setDataArea(JtsAdapter.toWorldArea(bounds));
@@ -489,9 +489,8 @@ public class Renderer
 		this._theCanvas = _theCanvas;
 		double dpi = 90;
 		CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
-		this._tileCache = new TileCacheManager(new Dimension(256, 256),
-				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), dpi, -1, crs);
-
+		this._tileCache = new TileCacheManager(new Dimension(256, 256), 40, 1,
+				new Envelope(-180, 180, -90, 90), dpi, -1, crs);
 	}
 
 	public synchronized void setTheLayers(Layers _theLayers)

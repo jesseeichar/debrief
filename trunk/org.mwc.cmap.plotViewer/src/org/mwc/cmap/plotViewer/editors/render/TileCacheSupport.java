@@ -12,16 +12,16 @@ import com.vividsolutions.jts.util.Assert;
 
 public abstract class TileCacheSupport
 {
-	public static final int[] DEFAULT_WGS84 = new int[]
+	public static final double[] DEFAULT_WGS84 = new double[]
 	{ 1, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000,
 			100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 
 			20_000_000, 50_000_000, 100_000_000, 200_000_000, 500_000_000, 1_000_000_000, 
 			2_000_000_000};
 
-	private static final double DEGREE_TO_METERS = 6378137.0;
+	private static final double DEGREE_TO_METERS = 6378137.0 * 2.0 * Math.PI / 360;
 
 	protected final Dimension _tileSize;
-	protected final int[] _scales;
+	protected final double[] _scales;
 	protected final Coordinate _bottomLeft;
 	protected final double _dpi;
 	protected final CoordinateReferenceSystem _crs;
@@ -50,7 +50,7 @@ public abstract class TileCacheSupport
 	 *          0 is no decimals and any positive integer will define the number
 	 *          of decimal places up-to the maximum supported by double
 	 */
-	public TileCacheSupport(Dimension tileSize, int[] scales,
+	public TileCacheSupport(Dimension tileSize, double[] scales,
 			Coordinate bottomLeft, double dpi, int precision,
 			CoordinateReferenceSystem crs)
 	{
@@ -69,7 +69,83 @@ public abstract class TileCacheSupport
 		this._crs = crs;
 		this._precision = precision;
 	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * 
+	 * @param tileSize
+	 *          size of the tiles
+	 * @param numScales
+	 *          the number of scales to generate
+	 * @param minScale
+	 * 				  The smallest scale to allow.
+	 * @param maxEnvelope
+	 *          The maximum envelope to be allowed
+	 * @param dpi
+	 *          dpi of the display
+	 * @param crs
+	 *          the crs of the cache
+	 * @param precision
+	 *          the number of decimal digits. -1 will be maximum double precision,
+	 *          0 is no decimals and any positive integer will define the number
+	 *          of decimal places up-to the maximum supported by double
+	 */
+	public TileCacheSupport(Dimension tileSize, int numScales,
+			double minScale, Envelope maxEnvelope, double dpi, int precision,
+			CoordinateReferenceSystem crs)
+	{
+		Assert.isTrue(numScales > 0, "num scales must be greater than 0");
+		Assert.isTrue(tileSize != null, "tileSize must be non-null");
+		Assert.isTrue(minScale > 0, "minScale must be greater than 0");
+		Assert.isTrue(maxEnvelope != null, "maxEnvelope  must be non-null");
+		Assert.isTrue(crs != null, "crs must be non-null");
+		Assert.isTrue(dpi > 0, "dpi must be > 0");
+		Assert.isTrue(precision > -2, "precision must be > -2");
 
+		double maxScale = calculateScale(maxEnvelope, tileSize, crs, dpi);
+
+		double scaleStep = Math.max(1, (maxScale - minScale) / numScales);
+		double[] scales = new double[numScales];
+		for (int i = 0; i < scales.length; i++)
+		{
+			scales[i] = minScale + (scaleStep * i);
+		}
+		this._tileSize = tileSize;
+		this._scales = scales;
+		this._bottomLeft = new Coordinate(maxEnvelope.getMinX(), maxEnvelope.getMinY());
+		this._dpi = dpi;
+		this._crs = crs;
+		this._precision = precision;
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * 
+	 * @param tileSize
+	 *          size of the tiles
+	 * @param numScales
+	 *          the number of scales to generate
+	 * @param minEnvelope 
+	 * 				  The smallest envelope to be allowed
+	 * @param maxEnvelope
+	 *          The maximum envelope to be allowed
+	 * @param dpi
+	 *          dpi of the display
+	 * @param crs
+	 *          the crs of the cache
+	 * @param precision
+	 *          the number of decimal digits. -1 will be maximum double precision,
+	 *          0 is no decimals and any positive integer will define the number
+	 *          of decimal places up-to the maximum supported by double
+	 */
+	public TileCacheSupport(Dimension tileSize, int numScales,
+			Envelope minEnvelope, Envelope maxEnvelope, double dpi, int precision,
+			CoordinateReferenceSystem crs)
+	{
+		this(tileSize, numScales, calculateScale(minEnvelope, tileSize, crs, dpi), maxEnvelope, dpi, precision, crs);
+	}
 	/**
 	 * Calculate the closest scale give the parameters
 	 * 
@@ -78,12 +154,12 @@ public abstract class TileCacheSupport
 	 * @param dimension
 	 *          the size of the screen where the map is displayed
 	 */
-	public int getClosestScale(Envelope envelope, Dimension dimension)
+	public double getClosestScale(Envelope envelope, Dimension dimension)
 	{
 		double scale = calculateScale(envelope, dimension);
 		for (int i = 0; i < _scales.length; i++)
 		{
-			int nextScale = _scales[i];
+			double nextScale = _scales[i];
 			if (nextScale > scale)
 			{
 				if (i == 0)
@@ -122,7 +198,7 @@ public abstract class TileCacheSupport
 	 * @param center
 	 *          the center coordinate (in world units)
 	 */
-	public Envelope calculateBounds(Dimension screenSize, int scale,
+	public Envelope calculateBounds(Dimension screenSize, double scale,
 			Coordinate center)
 	{
 
@@ -233,21 +309,31 @@ public abstract class TileCacheSupport
 	 */
 	public synchronized double calculateScale(Envelope bounds, Dimension dimension)
 	{
+		return calculateScale(bounds, dimension, _crs, _dpi);
+	}
 
+	public static double calculateScale(Envelope bounds, Dimension dimension,
+			CoordinateReferenceSystem crs, double dpi)
+	{
 		double scale;
-		if (_crs instanceof GeographicCRS)
+		if (crs instanceof GeographicCRS)
 		{
 			scale = (bounds.getWidth() * DEGREE_TO_METERS)
-					/ (dimension.getWidth() / _dpi * 0.0254);
+					/ (dimension.getWidth() / dpi * 0.0254);
 		}
 		else
 		{
 
-			double pixelInMeters = this._dpi * 0.0254;
+			double pixelInMeters = dpi * 0.0254;
 			scale = bounds.getWidth() / (dimension.getWidth() / pixelInMeters);
 		}
 
 		return scale;
+	}
+	
+	public double[] getScales()
+	{
+		return _scales.clone();
 	}
 
 }

@@ -1,30 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<plot Created="Wed May 15 13:44:56 CEST 2013" Name="Debrief Plot" PlotId="1367394988880">
+<plot Created="Mon Jun 24 17:26:38 CEST 2013" Name="Debrief Plot" PlotId="1367394988880">
 <details Text="Saved with Debrief version dated Tue May 14 10:57:23 CEST 2013"/>
 <session>
 <layers>
-<layer LineThickness="0" Name="Chart Features" Visible="true">
-<vpf_database Visible="false"/>
-<Grid4W FillGrid="false" Name="4W Grid" Orientation="0.000" PlotLabels="true" PlotLines="true" US_Standard="false" Visible="true" xDelta="2.0000000" xMax="G" xMin="A" yDelta="2.0000000" yMax="6" yMin="1">
-<colour Value="DARK_GREY"/>
-<FillColor Value="WHITE"/>
-<Origin>
-<shortLocation Depth="0.000" Lat="12.0336522" Long="-11.5698753"/>
-</Origin>
-<font Bold="false" Family="Sans Serif" Italic="false" Size="8"/>
-</Grid4W>
-<coastline Name="World Default" Visible="true">
-<colour Value="GREY"/>
-</coastline>
-<grid PlotLabels="true" Visible="true">
-<font Bold="false" Family="Sans Serif" Italic="false" Size="8"/>
-<Delta Units="degs" Value="1.0000000"/>
-<colour Value="BROWN"/>
-</grid>
-<scale AutoMode="true" DisplayUnits="yd" Location="BottomLeft" Name="World Default" ScaleMax="100000" ScaleStep="50000" Visible="false">
-<colour Value="GREY"/>
-</scale>
-</layer>
 <track InterpolatePoints="false" LineStyle="0" LineThickness="2" LinkPositions="true" Name="OSPREY" NameAtStart="true" NameLocation="Right" NameVisible="true" PlotArrayCentre="false" PositionsVisible="true" SensorsVisible="true" SolutionsVisible="true" Symbol="Submarine" Visible="true">
 <colour Value="GREEN"/>
 <SymbolColor Value="RED"/>
@@ -4865,17 +4843,6 @@
 </TrackSegment>
 </track>
 <layer LineThickness="0" Name="Misc" Visible="true">
-<line ArrowAtEnd="false" Label="BARRIER CHARLIE" LabelLocation="Left" LabelVisible="true" LineThickness="0" Visible="true">
-<colour CustomBlue="0" CustomGreen="255" CustomRed="128" Value="custom"/>
-<fontcolour Value="CYAN"/>
-<font Bold="false" Family="Sans Serif" Italic="false" Size="12"/>
-<tl>
-<shortLocation Depth="0.000" Lat="12.0402528" Long="-11.7194153"/>
-</tl>
-<br>
-<shortLocation Depth="0.000" Lat="12.0756081" Long="-11.6832623"/>
-</br>
-</line>
 <rectangle Filled="false" Label="NOGO DELTA" LabelLocation="Right" LabelVisible="true" LineThickness="2" Visible="false">
 <colour Value="GREEN"/>
 <fontcolour Value="GREEN"/>
@@ -4887,6 +4854,17 @@
 <shortLocation Depth="0.000" Lat="12.1142789" Long="-11.6758295"/>
 </br>
 </rectangle>
+<line ArrowAtEnd="false" Label="BARRIER CHARLIE" LabelLocation="Left" LabelVisible="true" LineThickness="0" Visible="true">
+<colour CustomBlue="0" CustomGreen="255" CustomRed="128" Value="custom"/>
+<fontcolour Value="CYAN"/>
+<font Bold="false" Family="Sans Serif" Italic="false" Size="12"/>
+<tl>
+<shortLocation Depth="0.000" Lat="12.0402528" Long="-11.7194153"/>
+</tl>
+<br>
+<shortLocation Depth="0.000" Lat="12.0756081" Long="-11.6832623"/>
+</br>
+</line>
 <circle Filled="false" Label="Pipe Alpha" LabelLocation="Bottom" LabelVisible="true" LineThickness="3" Visible="true">
 <colour Value="YELLOW"/>
 <fontcolour Value="YELLOW"/>
@@ -4918,66 +4896,13 @@
 <narrative_entry Dtg="951212 113700" Entry="comment 11" Track="CARPET" Type="Narratives"/>
 <narrative_entry Dtg="951212 114100" Entry="comment 12" Track="CARPET" Type="Narratives"/>
 </narrative>
-<layer LineThickness="0" Name="My Custom Layer" Visible="true">
-<line ArrowAtEnd="false" Label="New line" LabelLocation="Left" LabelVisible="true" LineStyle="2" LineThickness="4" Visible="true">
-<colour CustomBlue="64" CustomGreen="128" CustomRed="255" Value="custom"/>
-<fontcolour CustomBlue="64" CustomGreen="128" CustomRed="255" Value="custom"/>
-<font Bold="false" Family="Sans Serif" Italic="false" Size="9"/>
-<tl>
-<shortLocation Depth="0.000" Lat="11.8422388" Long="-11.5059928"/>
-</tl>
-<br>
-<shortLocation Depth="0.000" Lat="12.0205063" Long="-11.5226005"/>
-</br>
-</line>
-<textlabel Label="Jesse Label" LabelLocation="Left" LabelVisible="false" Scale="Large" Symbol="Submarine" SymbolVisible="true" Visible="true">
-<colour Value="RED"/>
-<font Bold="false" Family="Sans Serif" Italic="false" Size="9"/>
-<centre>
-<shortLocation Depth="0.000" Lat="12.0141897" Long="-11.5884952"/>
-</centre>
-</textlabel>
-<line ArrowAtEnd="true" Label="My Line 1&#13;\n" LabelLocation="Left" LabelVisible="true" LineThickness="3" Visible="true">
-<colour CustomBlue="0" CustomGreen="64" CustomRed="0" Value="custom"/>
-<fontcolour Value="BLACK"/>
-<font Bold="true" Family="Arial" Italic="false" Size="11"/>
-<tl>
-<shortLocation Depth="0.000" Lat="11.8920827" Long="-11.8137197"/>
-</tl>
-<br>
-<shortLocation Depth="0.000" Lat="11.9230713" Long="-11.9761860"/>
-</br>
-</line>
-<line ArrowAtEnd="false" Label="New line" LabelLocation="Left" LabelVisible="true" LineThickness="0" Visible="true">
-<colour CustomBlue="150" CustomGreen="150" CustomRed="150" Value="custom"/>
-<fontcolour CustomBlue="150" CustomGreen="150" CustomRed="150" Value="custom"/>
-<font Bold="false" Family="Sans Serif" Italic="false" Size="9"/>
-<tl>
-<shortLocation Depth="0.000" Lat="12.0181579" Long="-11.6223757"/>
-</tl>
-<br>
-<shortLocation Depth="0.000" Lat="12.0535132" Long="-11.5862300"/>
-</br>
-</line>
-<line ArrowAtEnd="false" Label="New line" LabelLocation="Left" LabelVisible="true" LineThickness="2" Visible="true">
-<colour CustomBlue="150" CustomGreen="150" CustomRed="150" Value="custom"/>
-<fontcolour CustomBlue="150" CustomGreen="150" CustomRed="150" Value="custom"/>
-<font Bold="false" Family="Sans Serif" Italic="false" Size="9"/>
-<tl>
-<shortLocation Depth="0.000" Lat="11.9114049" Long="-11.3715905"/>
-</tl>
-<br>
-<shortLocation Depth="0.000" Lat="12.0936023" Long="-11.4384442"/>
-</br>
-</line>
-</layer>
 </layers>
 <projection Border="1.100" PrimaryOriented="false" PrimaryOrigin="false" Type="Flat">
 <tl>
-<shortLocation Depth="0.000" Lat="19.4405184" Long="-22.7223634"/>
+<shortLocation Depth="0.000" Lat="-48.7733174" Long="45.0152763"/>
 </tl>
 <br>
-<shortLocation Depth="0.000" Lat="4.3014939" Long="-0.5367068"/>
+<shortLocation Depth="0.000" Lat="-65.8633357" Long="77.3202515"/>
 </br>
 </projection>
 <gui>

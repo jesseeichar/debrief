@@ -15,13 +15,12 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.util.AssertionFailedException;
 
 public class CartesianTileCacheTest
 {
 	private TileCache _tileCache;
 
-	int[] scales = new int[]
+	double[] scales = new double[]
 	{ 1, 10, 100, 1000, 10000, 100000, 1000000 };
 
 	@Before
@@ -30,7 +29,7 @@ public class CartesianTileCacheTest
 
 		_tileCache = new TileCache(new Dimension(10, 10), scales, new Coordinate(
 				-100, -100), 100  / 2.54, 2, DefaultEngineeringCRS.CARTESIAN_2D,
-				new TestTileLoader());
+				new TestTileLoader(), null);
 	}
 
 	@Test
@@ -38,7 +37,7 @@ public class CartesianTileCacheTest
 
 		_tileCache = new TileCache(new Dimension(10, 10), scales, new Coordinate(
 				-100, -100), 100  / 2.54, 0, DefaultEngineeringCRS.CARTESIAN_2D,
-				new TestTileLoader());
+				new TestTileLoader(), null);
 		Envelope bounds = _tileCache.calculateBounds(new Dimension(200, 200), 1, new Coordinate(0,0));
 		assertEquals (200, (int)Math.floor(bounds.getWidth()));
 		assertEquals (200, (int)Math.ceil(bounds.getWidth()));
@@ -68,35 +67,24 @@ public class CartesianTileCacheTest
 	@Test
 	public void testGetClosestScaleExceptionalCases()
 	{
-		int scale = _tileCache.getClosestScale(new Envelope(-100, 100, -10, 10),
+		double scale = _tileCache.getClosestScale(new Envelope(-100, 100, -10, 10),
 				new Dimension(10, 10));
 
-		assertEquals(10, scale);
-
-		try
-		{
-			scale = _tileCache.getClosestScale(new Envelope(-180, 180, -90, 90),
-					new Dimension(5000000, 5000000));
-			fail("Expected Assertion error because dimension is too big");
-		}
-		catch (AssertionFailedException e)
-		{
-			// good
-		}
+		assertEquals(10, scale, 0.0001);
 
 		scale = _tileCache.getClosestScale(new Envelope(0, 0.00001, 0, 0.000001),
 				new Dimension(5000, 5000));
 
-		assertEquals(1, scale);
+		assertEquals(1, scale, 0.0001);
 	}
 
 	@Test
 	public void testGetClosestScale()
 	{
-		int scale = _tileCache.getClosestScale(new Envelope(10, 10, 110, 110),
+		double scale = _tileCache.getClosestScale(new Envelope(10, 10, 110, 110),
 				new Dimension(100, 100));
 
-		assertEquals(1, scale);
+		assertEquals(1, scale, 0.0001);
 	}
 
 	@Test
@@ -250,4 +238,16 @@ public class CartesianTileCacheTest
 		assertTrue (CRS.equalsIgnoreMetadata(crs, actualBounds.getCoordinateReferenceSystem()));
 	}
 
+	@Test
+	public void testCalculateScales()
+	{
+		TileCache tc = new TileCache(new Dimension(10, 10), 10, new Envelope(0,
+				10, 0, 10), new Envelope(0, 100, 0, 100), 100  / 2.54, 2, DefaultEngineeringCRS.CARTESIAN_2D, new TestTileLoader(), null);
+		
+		double[] scales = tc.getScales();
+		
+		assertEquals(10, scales.length);
+		
+		assertArrayEquals(new double[]{1,2,3,4,5,6,7,8,9,10}, scales, 0.0001);
+	}
 }
