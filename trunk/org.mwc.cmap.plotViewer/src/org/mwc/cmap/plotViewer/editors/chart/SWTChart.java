@@ -907,9 +907,6 @@ public abstract class SWTChart extends PlainChart implements ISelectionProvider
 	@Override
 	public final void update()
 	{
-		// clear out the layers object
-		_renderer.render(this._theCanvas);
-
 		// and start the update
 		_theCanvas.updateMe();
 	}
