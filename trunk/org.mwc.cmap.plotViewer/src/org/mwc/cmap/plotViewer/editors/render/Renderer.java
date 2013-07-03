@@ -338,8 +338,6 @@ public class Renderer
 						_futures.add(new RenderFuture(new SynchronousFuture(task)));
 						break;
 					case ERROR:
-						_futures.add(new RenderFuture(new SynchronousFuture(task)));
-						break;
 					case LOADING:
 					case BLANK:
 						_futures.add(new RenderFuture(_executorService.submit(task)));

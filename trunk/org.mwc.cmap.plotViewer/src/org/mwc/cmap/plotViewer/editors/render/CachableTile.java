@@ -79,7 +79,11 @@ public class CachableTile implements Tile
 			try {
 				this._state = TileState.LOADING;
 				this._image = _loader.load(_size, _bounds);
-				this._state = TileState.READY;
+				if (_image == null) {
+					this._state = TileState.BLANK;
+				} else {
+					this._state = TileState.READY;
+				}
 			} catch (Throwable t) {
 				_state = TileState.ERROR;
 				return _errorImage;

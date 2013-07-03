@@ -44,8 +44,9 @@ public class LayerTileLoader implements TileLoader
 			if (TileCache.isDebug()) {
 				dest.setColor(Color.RED);
 				dest.setLineWidth(2);
-				gc.drawRectangle(0, 0, tileSize.width-1, tileSize.height-1);
-
+				gc.setAlpha(100);
+				gc.fillRectangle(0, 0, tileSize.width-1, tileSize.height-1);
+				gc.setAlpha(255);
 				dest.setColor(Color.WHITE);
 				String xbounds = "x:" + round(envelope.getMinX()) +" : "+ round(envelope.getMaxX());
 				String ybounds = ", y:" + round(envelope.getMinY()) +" : "+ round(envelope.getMaxY());
