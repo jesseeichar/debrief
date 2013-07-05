@@ -491,6 +491,8 @@ public class Renderer
 		CoordinateReferenceSystem crs = DefaultGeographicCRS.WGS84;
 		this._tileCache = new TileCacheManager(new Dimension(256, 256), 40, 1,
 				new Envelope(-180, 180, -90, 90), dpi, -1, crs);
+		this._tileCache = new TileCacheManager(new Dimension(256, 256),
+				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), dpi, -1, crs);
 	}
 
 	public synchronized void setTheLayers(Layers _theLayers)
