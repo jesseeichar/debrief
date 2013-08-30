@@ -6,12 +6,29 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
 
+/**
+ * A RenderTask implementation for loading a particular tile. asynchronously.
+ * 
+ * @author Jesse
+ * 
+ */
 public class TileRenderTask extends AbstractRenderTask
 {
 	private PositionedTile _tile;
 	private int _tileXIndex;
 	private int _tileYIndex;
 
+	/**
+	 * Set the parameters for the tile that needs to be loaded.
+	 * 
+	 * @param tileXIndex
+	 *          the x index of the tile to load
+	 * @param tileYIndex
+	 *          the y index of the tile to load
+	 * @param tile
+	 *          a tile that has been bound to a screen location so that it can be
+	 *          rendered.
+	 */
 	public void setTile(int tileXIndex, int tileYIndex, PositionedTile tile)
 	{
 		this._tile = tile;
@@ -40,7 +57,8 @@ public class TileRenderTask extends AbstractRenderTask
 				gc.dispose();
 			}
 		}
-		RenderTaskResult result = new RenderTaskResult(load, _tile.getDrawArea(), tilePos)
+		RenderTaskResult result = new RenderTaskResult(load, _tile.getDrawArea(),
+				tilePos)
 		{
 
 			@Override

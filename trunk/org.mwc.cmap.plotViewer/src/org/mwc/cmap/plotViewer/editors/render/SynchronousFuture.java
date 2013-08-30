@@ -6,7 +6,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Executes the task on construction and is always ready.
+ * A future that is already calculated before construction and therefore is always 
+ * ready. This class is used when the task is known to be non-blocking (usually 
+ * because it was rendered previously).
+ * 
+ * This can be used for tiles that were previously loaded.
  * 
  * @author Jesse
  */

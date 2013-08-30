@@ -15,6 +15,13 @@ import MWC.Algorithms.PlainProjection;
 import MWC.GUI.CanvasType;
 import MWC.GUI.Layer;
 
+/**
+ * A TileLoader for rendering a Layer (or the correct portion of the layer) to a
+ * tile.
+ * 
+ * @author Jesse
+ * 
+ */
 public class LayerTileLoader implements TileLoader
 {
 
@@ -40,18 +47,21 @@ public class LayerTileLoader implements TileLoader
 		{
 			dest.startDraw(gc);
 			_layer.paint(dest);
-			
-			if (TileCache.isDebug()) {
+
+			if (TileCache.isDebug())
+			{
 				dest.setColor(Color.RED);
 				dest.setLineWidth(2);
 				gc.setAlpha(100);
-				gc.fillRectangle(0, 0, tileSize.width-1, tileSize.height-1);
+				gc.fillRectangle(0, 0, tileSize.width - 1, tileSize.height - 1);
 				gc.setAlpha(255);
 				dest.setColor(Color.WHITE);
-				String xbounds = "x:" + round(envelope.getMinX()) +" : "+ round(envelope.getMaxX());
-				String ybounds = ", y:" + round(envelope.getMinY()) +" : "+ round(envelope.getMaxY());
-				int quarterHeight = tileSize.height/4;
-				dest.drawText(xbounds+ybounds, 2, quarterHeight * 3);
+				String xbounds = "x:" + round(envelope.getMinX()) + " : "
+						+ round(envelope.getMaxX());
+				String ybounds = ", y:" + round(envelope.getMinY()) + " : "
+						+ round(envelope.getMaxY());
+				int quarterHeight = tileSize.height / 4;
+				dest.drawText(xbounds + ybounds, 2, quarterHeight * 3);
 			}
 			return image;
 		}
@@ -69,6 +79,6 @@ public class LayerTileLoader implements TileLoader
 	{
 		int precision = 1000;
 		int rounded = (int) (num * precision);
-		return ((double)rounded) / precision;
+		return ((double) rounded) / precision;
 	}
 }

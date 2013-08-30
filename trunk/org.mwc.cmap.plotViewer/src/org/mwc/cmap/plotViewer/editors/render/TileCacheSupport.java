@@ -10,13 +10,22 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.util.Assert;
 
+/**
+ * Abstract super class for TileCacheManager and TileCache. Has methods required
+ * for both.
+ * 
+ * @author Jesse
+ */
 public abstract class TileCacheSupport
 {
+	/**
+	 * The default scales to sue for Default wgs84.
+	 */
 	public static final double[] DEFAULT_WGS84 = new double[]
 	{ 1, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10_000, 20_000, 50_000,
-			100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000, 
-			20_000_000, 50_000_000, 100_000_000, 200_000_000, 500_000_000, 1_000_000_000, 
-			2_000_000_000};
+			100_000, 200_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000,
+			20_000_000, 50_000_000, 100_000_000, 200_000_000, 500_000_000,
+			1_000_000_000, 2_000_000_000 };
 
 	private static final double DEGREE_TO_METERS = 6378137.0 * 2.0 * Math.PI / 360;
 
@@ -69,7 +78,7 @@ public abstract class TileCacheSupport
 		this._crs = crs;
 		this._precision = precision;
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -79,7 +88,7 @@ public abstract class TileCacheSupport
 	 * @param numScales
 	 *          the number of scales to generate
 	 * @param minScale
-	 * 				  The smallest scale to allow.
+	 *          The smallest scale to allow.
 	 * @param maxEnvelope
 	 *          The maximum envelope to be allowed
 	 * @param dpi
@@ -91,8 +100,8 @@ public abstract class TileCacheSupport
 	 *          0 is no decimals and any positive integer will define the number
 	 *          of decimal places up-to the maximum supported by double
 	 */
-	public TileCacheSupport(Dimension tileSize, int numScales,
-			double minScale, Envelope maxEnvelope, double dpi, int precision,
+	public TileCacheSupport(Dimension tileSize, int numScales, double minScale,
+			Envelope maxEnvelope, double dpi, int precision,
 			CoordinateReferenceSystem crs)
 	{
 		Assert.isTrue(numScales > 0, "num scales must be greater than 0");
@@ -113,7 +122,8 @@ public abstract class TileCacheSupport
 		}
 		this._tileSize = tileSize;
 		this._scales = scales;
-		this._bottomLeft = new Coordinate(maxEnvelope.getMinX(), maxEnvelope.getMinY());
+		this._bottomLeft = new Coordinate(maxEnvelope.getMinX(),
+				maxEnvelope.getMinY());
 		this._dpi = dpi;
 		this._crs = crs;
 		this._precision = precision;
@@ -127,8 +137,8 @@ public abstract class TileCacheSupport
 	 *          size of the tiles
 	 * @param numScales
 	 *          the number of scales to generate
-	 * @param minEnvelope 
-	 * 				  The smallest envelope to be allowed
+	 * @param minEnvelope
+	 *          The smallest envelope to be allowed
 	 * @param maxEnvelope
 	 *          The maximum envelope to be allowed
 	 * @param dpi
@@ -144,8 +154,10 @@ public abstract class TileCacheSupport
 			Envelope minEnvelope, Envelope maxEnvelope, double dpi, int precision,
 			CoordinateReferenceSystem crs)
 	{
-		this(tileSize, numScales, calculateScale(minEnvelope, tileSize, crs, dpi), maxEnvelope, dpi, precision, crs);
+		this(tileSize, numScales, calculateScale(minEnvelope, tileSize, crs, dpi),
+				maxEnvelope, dpi, precision, crs);
 	}
+
 	/**
 	 * Calculate the closest scale give the parameters
 	 * 
@@ -312,6 +324,70 @@ public abstract class TileCacheSupport
 		return calculateScale(bounds, dimension, _crs, _dpi);
 	}
 
+	/**
+	 * Calculate the scale and get the scale.
+	 * <p>
+	 * Scale is essentially the distance on the real world represented by the
+	 * distance on the map.
+	 * </p>
+	 * <p>
+	 * For engineering projections this is easy because the grid is essentially
+	 * cartesian and simple trigonometry can be used to calculate the projection
+	 * </p>
+	 * <p>
+	 * LatLong is a pain with regards to scale because the units are degrees as
+	 * such, as you pan north (or south) the scale actually changes because the
+	 * envelope.getWidth and getHeight stay the same but because the lines
+	 * converge at the poles the ground distance actually decreases (to infinity).
+	 * </p>
+	 * <p>
+	 * Since we want to use tiles, we don't want the scale (with respect to tile
+	 * calculation) to change. To take this into account I am going to calculate
+	 * the scale (for ellipsoidal projections) at the 0,0 instead of the actual
+	 * place where the bounds are.
+	 * </p>
+	 * <p>
+	 * Consider the following example:
+	 * </p>
+	 * <p>
+	 * User zooms to an country (say switzerland) and pans to the UK. Obviously in
+	 * this case the scale with respect to the tile calculation must stay the
+	 * same. The actual scale may reflect the correct scale but the tiles don't
+	 * need to care about that.
+	 * </p>
+	 * <p>
+	 * Then use zooms out to view whole world, centers on UK and Zooms back to
+	 * same zoom level. The tiles should be reused and the view should be the same
+	 * as before.
+	 * </p>
+	 * <p>
+	 * If we were to always calculate the scale at the current location 2 things
+	 * would happen:
+	 * </p>
+	 * <ul>
+	 * <li>
+	 * The zoom back the UK would be at a different scale and tiles would be
+	 * re-rendered</li>
+	 * <li>
+	 * As we zoom north or south we would either:
+	 * <ul>
+	 * <li>
+	 * Get popping as the display adjusted to the new closest zoom level</li>
+	 * <li>
+	 * Or it would appear we are zooming out as we pan north.</li>
+	 * </ul>
+	 * </li>
+	 * </ul>
+	 * 
+	 * @param bounds
+	 *          the bounds in the world
+	 * @param dimension
+	 *          the size of the display
+	 * @param crs
+	 *          the crs for calculating the scale
+	 * @param the
+	 *          dpi for the calculation.
+	 */
 	public static double calculateScale(Envelope bounds, Dimension dimension,
 			CoordinateReferenceSystem crs, double dpi)
 	{
@@ -330,7 +406,10 @@ public abstract class TileCacheSupport
 
 		return scale;
 	}
-	
+
+	/**
+	 * Get the scales supported by the tile caches.
+	 */
 	public double[] getScales()
 	{
 		return _scales.clone();

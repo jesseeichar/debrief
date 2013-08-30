@@ -17,18 +17,27 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.util.Assert;
 
+/**
+ * A tile cache for a single layer.
+ * 
+ * A Tile cache applies only to a single layer.
+ * 
+ * @author Jesse
+ * 
+ */
 public class TileCache extends TileCacheSupport
 {
 	private class ScaleLevelCache
 	{
 		/**
-		 * cached tiles.  x index, y index.  Can access the tile at x,y by doing: _tiles.get(x).get(y);
+		 * cached tiles. x index, y index. Can access the tile at x,y by doing:
+		 * _tiles.get(x).get(y);
 		 */
 		private Map<Integer, Map<Integer, CachableTile>> _tiles = new HashMap<Integer, Map<Integer, CachableTile>>();
 		volatile int _tileCount = 0;
 
-		public synchronized CachableTile getTile(int xIndex, int yIndex, double tileWidth,
-				double tileHeight)
+		private synchronized CachableTile getTile(int xIndex, int yIndex,
+				double tileWidth, double tileHeight)
 		{
 
 			Map<Integer, CachableTile> tileColumn = _tiles.get(xIndex);
@@ -52,7 +61,8 @@ public class TileCache extends TileCacheSupport
 				tileColumn.put(yIndex, tile);
 			}
 
-			if (tile.getState() == TileState.DISPOSED) {
+			if (tile.getState() == TileState.DISPOSED)
+			{
 				System.out.println("Tile has been disposed");
 			}
 			return tile;
@@ -61,7 +71,7 @@ public class TileCache extends TileCacheSupport
 		public void dispose()
 		{
 			_tileCount = 0;
-			Collection<Map<Integer,CachableTile>> values = _tiles.values();
+			Collection<Map<Integer, CachableTile>> values = _tiles.values();
 			for (Map<Integer, CachableTile> tileColumn : values)
 			{
 				Collection<CachableTile> tiles = tileColumn.values();
@@ -76,6 +86,7 @@ public class TileCache extends TileCacheSupport
 			_errorImage.dispose();
 		}
 	}
+
 	private static final Coordinate ORIGIN = new Coordinate(0, 0);
 	private static final String TILE_CACHE_DEBUG = "tileCacheDebug";
 	/**
@@ -112,14 +123,14 @@ public class TileCache extends TileCacheSupport
 	 * @param loader
 	 *          the strategy object used for loading the imagery of tiles.
 	 * @param errorImage
-	 * 					An image to display when there is an error loading a tile.
+	 *          An image to display when there is an error loading a tile.
 	 */
 	public TileCache(Dimension tileSize, double[] scales, Coordinate bottomLeft,
 			double dpi, int precision, CoordinateReferenceSystem crs,
 			TileLoader loader, Image errorImage)
 	{
 		super(tileSize, scales, bottomLeft, dpi, precision, crs);
-		
+
 		Assert.isTrue(loader != null, "Loader must be non-null");
 		this._loader = loader;
 		this._errorImage = errorImage;
@@ -139,8 +150,8 @@ public class TileCache extends TileCacheSupport
 	 *          size of the tiles
 	 * @param numScales
 	 *          the number of scales to generate
-	 * @param minEnvelope 
-	 * 				  The smallest envelope to be allowed
+	 * @param minEnvelope
+	 *          The smallest envelope to be allowed
 	 * @param maxEnvelope
 	 *          The maximum envelope to be allowed
 	 * @param dpi
@@ -154,15 +165,16 @@ public class TileCache extends TileCacheSupport
 	 * @param loader
 	 *          the strategy object used for loading the imagery of tiles.
 	 * @param errorImage
-	 * 					An image to display when there is an error loading a tile.
+	 *          An image to display when there is an error loading a tile.
 	 */
-	public TileCache(Dimension tileSize, int numScales,
-			Envelope minEnvelope, Envelope maxEnvelope, double dpi, int precision,
+	public TileCache(Dimension tileSize, int numScales, Envelope minEnvelope,
+			Envelope maxEnvelope, double dpi, int precision,
 			CoordinateReferenceSystem crs, TileLoader loader, Image errorImage)
 	{
 		this(tileSize, numScales, calculateScale(minEnvelope, tileSize, crs, dpi),
 				maxEnvelope, dpi, precision, crs, loader, errorImage);
 	}
+
 	/**
 	 * Constructor
 	 * 
@@ -172,7 +184,7 @@ public class TileCache extends TileCacheSupport
 	 * @param numScales
 	 *          the number of scales to generate
 	 * @param minScale
-	 * 				  The smallest scale to allow.
+	 *          The smallest scale to allow.
 	 * @param maxEnvelope
 	 *          The maximum envelope to be allowed
 	 * @param dpi
@@ -186,10 +198,10 @@ public class TileCache extends TileCacheSupport
 	 * @param loader
 	 *          the strategy object used for loading the imagery of tiles.
 	 * @param errorImage
-	 * 					An image to display when there is an error loading a tile.
+	 *          An image to display when there is an error loading a tile.
 	 */
-	public TileCache(Dimension tileSize, int numScales,
-			double minScale, Envelope maxEnvelope, double dpi, int precision,
+	public TileCache(Dimension tileSize, int numScales, double minScale,
+			Envelope maxEnvelope, double dpi, int precision,
 			CoordinateReferenceSystem crs, TileLoader loader, Image errorImage)
 	{
 		super(tileSize, numScales, minScale, maxEnvelope, dpi, precision, crs);
@@ -204,6 +216,7 @@ public class TileCache extends TileCacheSupport
 			_cacheIndices.put(_scales[i], i);
 		}
 	}
+
 	/**
 	 * Calculate and create/get tiles for the current view area.
 	 * 
@@ -216,7 +229,8 @@ public class TileCache extends TileCacheSupport
 	 * @return the tiles in a x,y array of tiles. getTiles[0][0] will get the
 	 *         first tile to be drawn at the bottom left location.
 	 */
-	public synchronized PositionedTile[][] getTiles(Dimension screenSize, double scale, Coordinate center)
+	public synchronized PositionedTile[][] getTiles(Dimension screenSize,
+			double scale, Coordinate center)
 	{
 		int minXTileCount = (int) Math.ceil(((double) screenSize.width)
 				/ _tileSize.width);
@@ -231,7 +245,7 @@ public class TileCache extends TileCacheSupport
 		{
 			throw new IllegalArgumentException(
 					"The lower left corner of the display area [" + bounds
-							+ "] cannot be beyond: [" + _bottomLeft+"]");
+							+ "] cannot be beyond: [" + _bottomLeft + "]");
 		}
 
 		Envelope tileBounds = calculateBounds(_tileSize, scale, ORIGIN);
@@ -295,13 +309,15 @@ public class TileCache extends TileCacheSupport
 		AffineTransform2D worldToScreenTransform;
 		try
 		{
-			worldToScreenTransform = new AffineTransform2D(RendererUtilities.worldToScreenTransform(bounds, new Rectangle(screenSize), _crs));
+			worldToScreenTransform = new AffineTransform2D(
+					RendererUtilities.worldToScreenTransform(bounds, new Rectangle(
+							screenSize), _crs));
 		}
 		catch (TransformException e)
 		{
 			throw new RuntimeException(e);
 		}
-		
+
 		PositionedTile[][] tiles = new PositionedTile[xTileCount][yTileCount];
 		for (int xIndex = xStartIndex; xIndex < xStartIndex + xTileCount; xIndex++)
 		{
@@ -312,9 +328,10 @@ public class TileCache extends TileCacheSupport
 				currentTileBounds.translate(tileBounds.getWidth() * xIndex
 						+ _bottomLeft.x, tileBounds.getHeight() * yIndex + _bottomLeft.y);
 
-				Tile tile = cache.getTile(
-						xIndex, yIndex, tileBounds.getWidth(), tileBounds.getHeight());
-				tiles[xIndex - xStartIndex][yIndex - yStartIndex] = new PositionedTile(tile, worldToScreenTransform);
+				Tile tile = cache.getTile(xIndex, yIndex, tileBounds.getWidth(),
+						tileBounds.getHeight());
+				tiles[xIndex - xStartIndex][yIndex - yStartIndex] = new PositionedTile(
+						tile, worldToScreenTransform);
 			}
 		}
 
@@ -322,6 +339,8 @@ public class TileCache extends TileCacheSupport
 	}
 
 	/**
+	 * Get the internal cache for the given scale level.
+	 * 
 	 * @param scale
 	 * @return
 	 */
@@ -339,13 +358,17 @@ public class TileCache extends TileCacheSupport
 		return cache;
 	}
 
+	/**
+	 * Dispose of all held resources. Will dispose of all tiles.
+	 */
 	public synchronized void dispose()
 	{
 		Collection<Integer> indices = _cacheIndices.values();
 		for (Integer index : indices)
 		{
 			ScaleLevelCache nextCache = _caches[index];
-			if (nextCache != null) {
+			if (nextCache != null)
+			{
 				nextCache.dispose();
 			}
 		}
@@ -353,6 +376,14 @@ public class TileCache extends TileCacheSupport
 		_cacheIndices.clear();
 	}
 
+	/**
+	 * Return if the system is in debug mode. Debug mode can be enabled by setting
+	 * system property {@value #TILE_CACHE_DEBUG}. This can conveniently be done
+	 * with a -D parameter on startup.
+	 * 
+	 * When debug is enabled the borders of each tile is drawn along with the
+	 * bounding box.
+	 */
 	public static boolean isDebug()
 	{
 		return Boolean.parseBoolean(System.getProperty(TILE_CACHE_DEBUG, "false"));

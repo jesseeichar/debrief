@@ -170,5 +170,4 @@ public class MultiLayerCompositeLayer implements Layer
 		return "MultiLayerCompositeLayer [_layers=" + _layers + "]";
 	}
 
-	
 }

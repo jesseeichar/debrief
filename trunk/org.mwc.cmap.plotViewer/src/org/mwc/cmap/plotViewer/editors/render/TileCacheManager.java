@@ -19,6 +19,12 @@ import MWC.GUI.Layer;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 
+/**
+ * Manages Tile caches for several layers.
+ * 
+ * @author Jesse
+ * 
+ */
 public class TileCacheManager extends TileCacheSupport
 {
 	private Map<Layer, TileCache> _tileCache = new IdentityHashMap<Layer, TileCache>();
@@ -61,8 +67,8 @@ public class TileCacheManager extends TileCacheSupport
 	 *          size of the tiles
 	 * @param numScales
 	 *          the number of scales to generate
-	 * @param minEnvelope 
-	 * 				  The smallest envelope to be allowed
+	 * @param minEnvelope
+	 *          The smallest envelope to be allowed
 	 * @param maxEnvelope
 	 *          The maximum envelope to be allowed
 	 * @param dpi
@@ -80,7 +86,7 @@ public class TileCacheManager extends TileCacheSupport
 	{
 		super(tileSize, numScales, minEnvelope, maxEnvelope, dpi, precision, crs);
 	}
-	
+
 	/**
 	 * Constructor
 	 * 
@@ -90,7 +96,7 @@ public class TileCacheManager extends TileCacheSupport
 	 * @param numScales
 	 *          the number of scales to generate
 	 * @param minScale
-	 * 				  The smallest scale to allow.
+	 *          The smallest scale to allow.
 	 * @param maxEnvelope
 	 *          The maximum envelope to be allowed
 	 * @param dpi
@@ -102,13 +108,16 @@ public class TileCacheManager extends TileCacheSupport
 	 *          0 is no decimals and any positive integer will define the number
 	 *          of decimal places up-to the maximum supported by double
 	 */
-	public TileCacheManager(Dimension tileSize, int numScales,
-			double minScale, Envelope maxEnvelope, double dpi, int precision,
+	public TileCacheManager(Dimension tileSize, int numScales, double minScale,
+			Envelope maxEnvelope, double dpi, int precision,
 			CoordinateReferenceSystem crs)
 	{
 		super(tileSize, numScales, minScale, maxEnvelope, dpi, precision, crs);
 	}
 
+	/**
+	 * Dispose of all tile caches (and associated resources).
+	 */
 	public void clear()
 	{
 		// tell the images to clear themselves out
@@ -140,10 +149,16 @@ public class TileCacheManager extends TileCacheSupport
 		_tileCache.clear();
 	}
 
-	public void remove(Layer changedLayer)
+	/**
+	 * Dispose of the tile cache for a given layer.
+	 * 
+	 * @param layer
+	 *          the layer whose tile cache needs to be disposed of.
+	 */
+	public void remove(Layer layer)
 	{
 		// get the image
-		TileCache theCache = _tileCache.get(changedLayer);
+		TileCache theCache = _tileCache.get(layer);
 
 		// and ditch the image
 		if (theCache != null)
@@ -152,28 +167,38 @@ public class TileCacheManager extends TileCacheSupport
 			theCache.dispose();
 
 			// and delete that layer
-			_tileCache.remove(changedLayer);
+			_tileCache.remove(layer);
 		}
 	}
 
-	public TileCache getTileCache(Layer thisLayer, ImageData imageData)
+	/**
+	 * Get the tile cache for a given layer. The tile cache will be created if
+	 * necessary.
+	 * 
+	 * @param layer
+	 *          the layer whose tile cache needs to be retrieved.
+	 * @param errorImageData
+	 *          image data to use when creating the error image (for tiles that
+	 *          fail to load).
+	 */
+	public TileCache getTileCache(Layer layer, ImageData errorImageData)
 	{
-		TileCache tileCache = _tileCache.get(thisLayer);
+		TileCache tileCache = _tileCache.get(layer);
 		if (tileCache == null)
 		{
-			LayerTileLoader loader = new LayerTileLoader(thisLayer);
-			Image errorImage = new Image(Display.getDefault(), imageData);
-			
+			LayerTileLoader loader = new LayerTileLoader(layer);
+			Image errorImage = new Image(Display.getDefault(), errorImageData);
+
 			GC gc = new GC(errorImage);
 			Color color = new Color(errorImage.getDevice(), 255, 0, 0);
 			gc.setBackground(color);
 			gc.setAlpha(128);
-			gc.fillRectangle(0, 0, imageData.width, imageData.height);
+			gc.fillRectangle(0, 0, errorImageData.width, errorImageData.height);
 			gc.dispose();
 
 			tileCache = new TileCache(_tileSize, _scales, _bottomLeft, _dpi,
 					_precision, _crs, loader, errorImage);
-			_tileCache.put(thisLayer, tileCache);
+			_tileCache.put(layer, tileCache);
 		}
 		return tileCache;
 	}

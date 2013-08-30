@@ -6,9 +6,9 @@ import org.eclipse.swt.graphics.Image;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 
 /**
- * A tile of rendered (or to be rendered) map layer. It has not position on the screen only on the world
- * and thus can be reused on any map or screen size.
- *
+ * A tile of rendered (or to be rendered) map layer. It has not position on the
+ * screen only on the world and thus can be reused on any map or screen size.
+ * 
  * @author Jesse
  */
 public class CachableTile implements Tile
@@ -20,30 +20,52 @@ public class CachableTile implements Tile
 	private final TileLoader _loader;
 	private Image _errorImage;
 
-	public CachableTile(TileLoader loader, Dimension tileSize, ReferencedEnvelope bounds, Image errorImage)
+	/**
+	 * Constructor.
+	 * 
+	 * @param loader
+	 *          the tile loader strategy for loading the tile image.
+	 * @param tileSize
+	 *          the size of the tile to load
+	 * @param bounds
+	 *          the bounds of the tile to load.
+	 * @param errorImage
+	 *          the image to use in case of an error during the tile loading.
+	 */
+	public CachableTile(TileLoader loader, Dimension tileSize,
+			ReferencedEnvelope bounds, Image errorImage)
 	{
 		this._loader = loader;
 		this._size = tileSize;
 		this._bounds = bounds;
 		this._errorImage = errorImage;
 	}
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.mwc.cmap.plotViewer.editors.render.Tile#dispose()
 	 */
 	@Override
-	public final synchronized void dispose(){
-		if (_image != null) {
+	public final synchronized void dispose()
+	{
+		if (_image != null)
+		{
 			_image.dispose();
 		}
 		_state = TileState.DISPOSED;
 		_image = null;
 	}
+
 	@Override
 	public String toString()
 	{
 		return "Tile [" + _state + ", " + _bounds + "]";
 	}
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.mwc.cmap.plotViewer.editors.render.Tile#getBounds()
 	 */
 	@Override
@@ -51,8 +73,10 @@ public class CachableTile implements Tile
 	{
 		return _bounds;
 	}
-	
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.mwc.cmap.plotViewer.editors.render.Tile#getSize()
 	 */
 	@Override
@@ -61,7 +85,9 @@ public class CachableTile implements Tile
 		return _size;
 	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.mwc.cmap.plotViewer.editors.render.Tile#getState()
 	 */
 	@Override
@@ -69,22 +95,32 @@ public class CachableTile implements Tile
 	{
 		return _state;
 	}
-	/* (non-Javadoc)
+
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.mwc.cmap.plotViewer.editors.render.Tile#load()
 	 */
 	@Override
 	public synchronized Image load()
 	{
-		if (_image == null) {
-			try {
+		if (_image == null)
+		{
+			try
+			{
 				this._state = TileState.LOADING;
 				this._image = _loader.load(_size, _bounds);
-				if (_image == null) {
+				if (_image == null)
+				{
 					this._state = TileState.BLANK;
-				} else {
+				}
+				else
+				{
 					this._state = TileState.READY;
 				}
-			} catch (Throwable t) {
+			}
+			catch (Throwable t)
+			{
 				_state = TileState.ERROR;
 				t.printStackTrace();
 				return _errorImage;
@@ -92,5 +128,5 @@ public class CachableTile implements Tile
 		}
 		return _image;
 	}
-	
+
 }

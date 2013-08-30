@@ -38,6 +38,16 @@ import MWC.GenericData.WorldArea;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 
+/**
+ * Manages rendering layers to an {@link SWTCanvasAdapter}.
+ * 
+ * Entry point for the Rendering API. This class contains a
+ * {@link TileCacheManager} for managing the {@link TileCache}s at different
+ * zoom levels.
+ * 
+ * @author Jesse
+ * 
+ */
 public class Renderer
 {
 
@@ -123,16 +133,24 @@ public class Renderer
 
 	private Map<String, GridCoverageLayer> _gcLayers = new HashMap<String, GridCoverageLayer>();
 
-	protected boolean doubleBufferPlot()
+	/**
+	 * Must be called when a layer has been removed. This will remove layer from
+	 * the tile cache.
+	 * 
+	 * @param removedLayer
+	 *          the layer that was removed.
+	 */
+	public synchronized void removeImage(Layer removedLayer)
 	{
-		return true;
+		_tileCache.remove(removedLayer);
 	}
 
-	public synchronized void removeImage(Layer changedLayer)
-	{
-		_tileCache.remove(changedLayer);
-	}
-
+	/**
+	 * Method for starting rendering to the canvas.
+	 * 
+	 * @param dest
+	 *          the canvas to render to.
+	 */
 	public synchronized void render(CanvasType dest)
 	{
 
@@ -211,8 +229,11 @@ public class Renderer
 				// deleted.
 				Enumeration<Layer> numer = new Enumeration<Layer>()
 				{
-					Iterator<String> hardCoded = Arrays
-							.asList("wsiearth.tif"/*, "clds.tif"*/).iterator();
+					Iterator<String> hardCoded = Arrays.asList("wsiearth.tif"/*
+																																		 * ,
+																																		 * "clds.tif"
+																																		 */)
+							.iterator();
 					Enumeration<Layer> actualLayers = _theLayers.sortedElements();
 
 					@Override
@@ -298,7 +319,7 @@ public class Renderer
 	 * @param thisLayer
 	 * @return
 	 */
-	protected synchronized ImageData renderLayer(CanvasType dest,
+	private synchronized ImageData renderLayer(CanvasType dest,
 			PlainProjection projection, int canvasHeight, int canvasWidth,
 			ImageData _myImageTemplate, final Layer thisLayer)
 	{
@@ -427,13 +448,7 @@ public class Renderer
 		}
 	}
 
-	/**
-	 * @param canv
-	 * @param future2
-	 * @throws InterruptedException
-	 * @throws ExecutionException
-	 */
-	protected int paintRenderFuture(SWTCanvasAdapter canv, RenderFuture future)
+	private int paintRenderFuture(SWTCanvasAdapter canv, RenderFuture future)
 			throws ExecutionException
 	{
 
@@ -484,6 +499,13 @@ public class Renderer
 		return rawProjection;
 	}
 
+	/**
+	 * Set the canvas that has the projection and bounds information required for
+	 * rendering.
+	 * 
+	 * @param _theCanvas
+	 *          the canvas
+	 */
 	public synchronized void setTheCanvas(SWTCanvas _theCanvas)
 	{
 		this._theCanvas = _theCanvas;
@@ -495,21 +517,28 @@ public class Renderer
 				TileCache.DEFAULT_WGS84, new Coordinate(-180, -90), dpi, -1, crs);
 	}
 
+	/**
+	 * Set the layers object that will be rendered by this Renderer.
+	 * 
+	 * @param _theLayers
+	 *          the layers object that will be rendered by this Renderer.
+	 */
 	public synchronized void setTheLayers(Layers _theLayers)
 	{
 		this._theLayers = _theLayers;
 	}
 
+	/**
+	 * Close this renderer. This will shutdown the {@link ExecutorService} and
+	 * clear all the caches.
+	 */
 	public synchronized void close()
 	{
 		_executorService.shutdownNow();
 		clearCaches();
 	}
 
-	/**
-	 * 
-	 */
-	protected void clearCaches()
+	private void clearCaches()
 	{
 		_tileCache.clear();
 		for (Image image : _images.values())
@@ -520,6 +549,10 @@ public class Renderer
 		_images.clear();
 	}
 
+	/**
+	 * Cancel a rendering process if there is one running. It is essentially a
+	 * no-op if there is no rendering process.
+	 */
 	public synchronized void cancel()
 	{
 		DebugLogger.log("starting cancelling");
@@ -570,6 +603,10 @@ public class Renderer
 
 	}
 
+	/**
+	 * Notify renderer that the canvas has been resized. This will not trigger a
+	 * re-render.
+	 */
 	public void canvasResized()
 	{
 		clearCaches();

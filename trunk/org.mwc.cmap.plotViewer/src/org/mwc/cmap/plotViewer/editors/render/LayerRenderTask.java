@@ -9,6 +9,13 @@ import org.mwc.cmap.core.ui_support.swt.SWTCanvasAdapter;
 
 import MWC.GUI.Layer;
 
+/**
+ * A Render task for rendering a Debrief layer to a swt image using the normal
+ * Debrief API for rendering.
+ * 
+ * @author Jesse
+ * 
+ */
 public class LayerRenderTask extends AbstractRenderTask
 {
 	private Layer _layer;
@@ -41,7 +48,8 @@ public class LayerRenderTask extends AbstractRenderTask
 			{
 				// ok, and now the SWT image
 				Image image = this._image;
-				if (this._image == null) {
+				if (this._image == null)
+				{
 					image = Renderer.createSWTImage(_myImageTemplate);
 				}
 
@@ -69,7 +77,8 @@ public class LayerRenderTask extends AbstractRenderTask
 				newGC.dispose();
 
 				Rectangle bounds = image.getBounds();
-				return new RenderTaskResult(image, new Rectangle(0, 0, bounds.width, bounds.height), _layer.getName())
+				return new RenderTaskResult(image, new Rectangle(0, 0, bounds.width,
+						bounds.height), _layer.getName())
 				{
 
 					@Override
